@@ -77,6 +77,26 @@
   @media (min-width:860px) { #cv { height:min(560px, calc(100vh - 190px)); } }
   .pop { position:fixed; font-size:28px; pointer-events:none; z-index:99; animation:pop 1.1s ease-out forwards; }
   @keyframes pop { to { transform:translate(var(--dx),var(--dy)) rotate(var(--r)); opacity:0; } }
+  /* shop, team, themes, boss */
+  .books { flex-wrap:wrap; } .books .btn { flex:1 1 45%; }
+  .team { text-align:center; } .prog { height:16px; background:#e5e7eb; border-radius:99px; overflow:hidden; margin:8px 0; } .prog i { display:block; height:100%; background:linear-gradient(90deg,#4f8cff,#ff9a3c); transition:width .6s; }
+  .grid.shop { grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); }
+  .item { border:0; background:#fff; border-radius:18px; padding:10px 4px; box-shadow:0 2px 6px rgba(0,0,0,.08); cursor:pointer; font-family:inherit; }
+  .item .e { display:block; font-size:42px; } .item small { font-weight:700; color:#6b7280; } .item.on { box-shadow:0 0 0 3px var(--ok); }
+  body[data-bg="sky"] { background:linear-gradient(180deg,#d9efff,#f4faff 60%) fixed; }
+  body[data-bg="sunset"] { background:linear-gradient(180deg,#ffe3d1,#ffd1e3) fixed; }
+  body[data-bg="mint"] { background:linear-gradient(180deg,#dcf7e8,#f2fff8) fixed; }
+  body[data-bg="candy"] { background:radial-gradient(#ffc2de 2px,transparent 2.5px) 0 0/24px 24px,#fff0f7; }
+  body[data-bg="stars"] { background:radial-gradient(#ffd966 2px,transparent 2.5px) 0 0/32px 32px,#fffbea; }
+  .mon { font-size:46px; line-height:40px; } .mon.hit { animation:shake .45s; }
+  @keyframes shake { 25% { transform:translateX(-10px) rotate(-10deg); } 75% { transform:translateX(10px) rotate(10deg); } }
+  .hp { flex:1; height:18px; background:#fee2e2; border-radius:99px; overflow:hidden; margin:0 10px; border:2px solid #fca5a5; } .hp i { display:block; height:100%; background:linear-gradient(#ef4444,#b91c1c); transition:width .5s; }
+  .victory { position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#5b2a00;
+             background:radial-gradient(circle at 50% 35%,#fff3b0,#ffb36b 60%,#ff7a8a); animation:fadein .5s; }
+  .victory h2 { font-size:44px; margin:6px 0; } .victory .trophy { font-size:130px; animation:bounce .8s ease infinite alternate; }
+  .victory .boom { font-size:60px; } .victory .champ { font-size:28px; font-weight:800; margin:6px 0; } .victory .loot { font-size:24px; font-weight:700; margin-top:10px; }
+  @keyframes fadein { from { opacity:0; } }
+  .fall { position:fixed; top:-40px; font-size:30px; pointer-events:none; z-index:70; animation:fall linear forwards; } @keyframes fall { to { transform:translateY(112vh) rotate(360deg); } }
   /* stickers */
   .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
   .stk { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:46px; background:#fff; border-radius:18px; box-shadow:0 2px 6px rgba(0,0,0,.08); }
@@ -185,11 +205,11 @@ function skipHint(a){
 }
 function qMul(a,b,topic){
   const [x,y] = rnd()<.5 ? [b,a] : [a,b];
-  return { topic, html:`<div class="big">${x} × ${y} = ?</div>`, answer:String(a*b), hint:skipHint(a) };
+  return { topic, html:`<div class="big">${x} × ${y} = ?</div>`, answer:String(a*b), hint:skipHint(a), fact:`m:${a}x${b}` };
 }
-function qMissing(a,b,topic){ return { topic, html:`<div class="big">${a} × ? = ${a*b}</div>`, answer:String(b), hint:skipHint(a) }; }
-function qAdd(a,b){ return { topic:'Add 進位', html:`<div class="big">${a} + ${b} = ?</div><div class="hint">先湊成 10 (make 10 first)</div>`, answer:String(a+b), hint:['Can you make a 10 first?',`How much does ${a} need to reach 10? Take that from ${b}.`] }; }
-function qSub(m,s){ return { topic:'Subtract 退位', html:`<div class="big">${m} − ${s} = ?</div><div class="hint">先減到 10 (break at 10)</div>`, answer:String(m-s), hint:['Use 10 as a stepping stone.','First take away just enough to land on 10, then take away the rest.'] }; }
+function qMissing(a,b,topic){ return { topic, html:`<div class="big">${a} × ? = ${a*b}</div>`, answer:String(b), hint:skipHint(a), fact:`m:${a}x${b}` }; }
+function qAdd(a,b){ return { topic:'Add 進位', html:`<div class="big">${a} + ${b} = ?</div><div class="hint">先湊成 10 (make 10 first)</div>`, answer:String(a+b), fact:`a:${a}+${b}`, hint:['Can you make a 10 first?',`How much does ${a} need to reach 10? Take that from ${b}.`] }; }
+function qSub(m,s){ return { topic:'Subtract 退位', html:`<div class="big">${m} − ${s} = ?</div><div class="hint">先減到 10 (break at 10)</div>`, answer:String(m-s), fact:`s:${m}-${s}`, hint:['Use 10 as a stepping stone.','First take away just enough to land on 10, then take away the rest.'] }; }
 
 /* --- Geometry (Ethan's weak area) --- */
 function qName(){
@@ -293,42 +313,60 @@ function qLength(){
 }
 
 /* ============ kid profiles ============ */
+// ADAPT = yesterday-style memory: facts to bring back + recent accuracy per topic (set in start())
+let ADAPT = { weak:[], acc:()=>null };
+const NOADAPT = { weak:[], acc:()=>null };
+// shift ONE question from the strongest topic to the weakest one (never more -- the goal is a daily habit, not a hard test)
+function tilt(cnt, protect=[]){
+  const sc = Object.keys(cnt).map(t=>[t,ADAPT.acc(t)]).filter(x=>x[1]!==null);
+  const weak = sc.filter(x=>x[1]<.65).sort((p,q)=>p[1]-q[1])[0];
+  const strong = sc.filter(x=>x[1]>.9 && cnt[x[0]]>1 && !protect.includes(x[0]) && (!weak||x[0]!==weak[0])).sort((p,q)=>q[1]-p[1])[0];
+  if(weak && strong){ cnt[weak[0]]++; cnt[strong[0]]--; }
+}
 const KIDS = {
   Ethan: {
     cls:'ethan', desc:'Grade 2 · Multiplication · Number & Ops · Geometry · Algebra · Measurement (30 questions)',
     build(){
       const seen = new Set(), mul = [];
+      ADAPT.weak.filter(f=>f[0]==='m').slice(0,3).forEach(f=>{ const [a,b] = f.slice(2).split('x').map(Number); seen.add(Math.min(a,b)+'x'+Math.max(a,b)); mul.push(qMul(a,b,'Multiply 1–9')); });
       while(mul.length<15){
         const a = rnd()<.6 ? ri(6,9) : ri(1,9), b = ri(1,9), k = Math.min(a,b)+'x'+Math.max(a,b);
         if(seen.has(k)) continue; seen.add(k);
         mul.push(mul.length%5===4 ? qMissing(a,b,'Multiply 1–9') : qMul(a,b,'Multiply 1–9'));
       }
       // teacher feedback: Number & Ops approaching, Geometry needs work, Algebra + Measurement at grade level
-      return shuffle([
-        ...mul,
-        ...uniq(1,qPlace), ...uniq(1,qCompare), ...uniq(1,qAddSub100), ...uniq(1,qSkip),
-        ...uniq(1,qName), ...uniq(1,qSides), ...uniq(1,qPerim), ...uniq(1,qFrac), ...uniq(1,qGrid), ...uniq(1,qRiddle), ...uniq(1,q3D),
-        ...uniq(1,rnd()<.5?qEvenOdd:qMissAdd), ...uniq(1,qArray),
-        ...uniq(1,qClock), ...uniq(1,rnd()<.5?qMoney:qLength)
-      ]);
+      const plan = {
+        'Number & Ops':[qPlace,qCompare,qAddSub100,qSkip],
+        'Geometry':[qName,qSides,qPerim,qFrac,qGrid,qRiddle,q3D],
+        'Algebra':[()=>rnd()<.5?qEvenOdd():qMissAdd(), qArray],
+        'Measurement':[qClock, ()=>rnd()<.5?qMoney():qLength()]
+      };
+      const cnt = {'Number & Ops':4, 'Geometry':7, 'Algebra':2, 'Measurement':2};
+      tilt(cnt);
+      const rest = [];
+      for(const [dom,fns] of Object.entries(plan)){ const order = shuffle(fns); for(let i=0;i<cnt[dom];i++) rest.push(...uniq(1, order[i%order.length])); }
+      return shuffle([...mul, ...rest]);
     }
   },
   Luke: {
     cls:'luke', desc:'Grade 1 · Add/Subtract within 20 (進位/退位) + ×2 ×3 ×4 (12 questions)',
     build(){
-      const adds = [], subs = [], mul = [];
-      const seenA=new Set(); while(adds.length<3){ const a=ri(2,9), b=ri(2,9); if(a+b<11) continue; const k=Math.min(a,b)+'+'+Math.max(a,b); if(seenA.has(k)) continue; seenA.add(k); adds.push(qAdd(a,b)); }
-      const seenS=new Set(); while(subs.length<3){ const m=ri(11,18), s=ri(m%10+1,9); if(s<=m%10) continue; const k=m+'-'+s; if(seenS.has(k)) continue; seenS.add(k); subs.push(qSub(m,s)); }
-      const seenM=new Set(); const add=(a,b)=>{ const k=a+'x'+b; if(seenM.has(k)) return; seenM.add(k); mul.push(qMul(a,b,'Multiply ×'+a)); };
-      // ×4 is the weak spot: half of the multiplication set
-      while(mul.filter(q=>q.topic==='Multiply ×4').length<3) add(4,ri(2,9));
-      while(mul.filter(q=>q.topic==='Multiply ×3').length<2) add(3,ri(2,9));
-      while(mul.filter(q=>q.topic==='Multiply ×2').length<1) add(2,ri(2,9));
-      return shuffle([...adds,...subs,...mul]);
+      const cnt = {'Add 進位':3, 'Subtract 退位':3, 'Multiply ×4':3, 'Multiply ×3':2, 'Multiply ×2':1};
+      tilt(cnt, ['Multiply ×4']);               // ×4 is the weak spot: never drop below 3
+      const out = [], seenA = new Set(), seenS = new Set(), seenM = new Set();
+      ADAPT.weak.slice(0,3).forEach(f=>{          // facts missed before come back (max 3)
+        const kind = f[0], body = f.slice(2);
+        if(kind==='a' && cnt['Add 進位']>0){ const [a,b] = body.split('+').map(Number); seenA.add(Math.min(a,b)+'+'+Math.max(a,b)); out.push(qAdd(a,b)); cnt['Add 進位']--; }
+        if(kind==='s' && cnt['Subtract 退位']>0){ const [m,sb] = body.split('-').map(Number); seenS.add(m+'-'+sb); out.push(qSub(m,sb)); cnt['Subtract 退位']--; }
+        if(kind==='m'){ const [a,b] = body.split('x').map(Number), T = 'Multiply ×'+a; if((cnt[T]||0)>0){ seenM.add(a+'x'+b); out.push(qMul(a,b,T)); cnt[T]--; } }
+      });
+      for(let i=0;i<cnt['Add 進位'];i++){ let a,b,k; do{ a=ri(2,9); b=ri(2,9); k=Math.min(a,b)+'+'+Math.max(a,b); }while(a+b<11||seenA.has(k)); seenA.add(k); out.push(qAdd(a,b)); }
+      for(let i=0;i<cnt['Subtract 退位'];i++){ let m,sb,k; do{ m=ri(11,18); sb=ri(m%10+1,9); k=m+'-'+sb; }while(seenS.has(k)); seenS.add(k); out.push(qSub(m,sb)); }
+      for(const T of ['Multiply ×4','Multiply ×3','Multiply ×2']){ const t = +T.slice(-1); for(let i=0;i<cnt[T];i++){ let b,k; do{ b=ri(2,9); k=t+'x'+b; }while(seenM.has(k)); seenM.add(k); out.push(qMul(t,b,T)); } }
+      return shuffle(out);
     }
   }
 };
-
 
 /* ============ Piano practice ============ */
 // pitch p: 0..14 = C3 … C5 (7 = middle C). Bass clef shows 0..7, treble clef shows 7..14.
@@ -409,9 +447,11 @@ const PIANO = {
     desc:'Piano · treble & bass clef · do re mi fa so la si do · C D E F G A B (10 questions)',
     build(){
       const P = { letters:LETTERS };
-      const notes = shuffle(Array.from({length:15},(_, i)=>i)).slice(0,10);     // 10 of the 15 notes C3…C5, different each day
+      const weakP = ADAPT.weak.filter(f=>f[0]==='p').map(f=>+f.slice(2)).slice(0,3);          // missed notes come back first
+      const rest = shuffle(Array.from({length:15},(_, i)=>i).filter(i=>!weakP.includes(i)));
+      const notes = [...weakP, ...rest].slice(0,10);                                         // 10 of the 15 notes C3…C5
       const types = shuffle([pKeyName,pEar,pStaffName,pStaffName,pSolfege,pSolfege,pNameKey,pStaffKey,pKeyStaff,pNameStaff]);
-      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; return q; });
+      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; q.fact='p:'+notes[i]; return q; });
     }
   },
   Luke: {
@@ -420,7 +460,7 @@ const PIANO = {
       const P = { letters:['C','D','E','F','G'] };
       const notes = shuffle([0,1,2,3,4,7,8,9,10,11]);                         // C–G below and above middle C
       const types = shuffle([pKeyName,pEar,pStaffName,pStaffName,pNameKey,pNameKey,pStaffKey,pStaffKey,pKeyStaff,pNameStaff]);
-      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; return q; });
+      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; q.fact='p:'+notes[i]; return q; });
     }
   }
 };
@@ -440,48 +480,138 @@ const BONUS = {3:'🥉',7:'🥈',14:'🥇',30:'💎'};   // streak-day badges
 
 /* ============ app ============ */
 const app = $('#app');
-let S = null;
+let S = null, SP = null;
+const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
+
+/* ---- coins, shop, themes ---- */
+const coinsOf = n => (load()._coins||{})[n] || 0;
+function addCoins(n, k){ const d = load(); d._coins = d._coins || {}; d._coins[n] = Math.max(0,(d._coins[n]||0)+k); save(d); }
+const SHOP = {
+  pet:[...['🦄','🐉','🦖','🐙','🦋','🐧','🦁','🐬'].map(e=>({id:e,emoji:e,price:25}))],
+  bg: [{id:'sky',emoji:'☁️',price:30},{id:'sunset',emoji:'🌅',price:30},{id:'mint',emoji:'🌿',price:30},{id:'candy',emoji:'🍬',price:30},{id:'stars',emoji:'⭐',price:30}],
+  pen:[{id:'fire',emoji:'🔥',price:40},{id:'galaxy',emoji:'🌌',price:40},{id:'glitter',emoji:'✨',price:40}]
+};
+const SHOP_TITLES = {pet:'🐾 Running pets 跑步小夥伴', bg:'🖼️ Backgrounds 背景', pen:'🖍️ Magic pens 魔法筆'};
+function shopOf(n){ const x = (load()._shop||{})[n] || {}; return { owned:x.owned||[], equip:x.equip||{} }; }
+function setShop(n, x){ const d = load(); d._shop = d._shop || {}; d._shop[n] = x; save(d); }
+function applyTheme(n){ document.body.dataset.bg = (n && shopOf(n).equip.bg) || ''; }
+
+function shop(name, msg=''){
+  document.body.className = KIDS[name].cls; applyTheme(name); S = null;
+  const sh = shopOf(name), c = coinsOf(name);
+  app.innerHTML = `<div class="narrow"><h1>🛒 ${name}'s Shop</h1><div class="sub">🪙 ${c} coins · answer questions to earn more · tap an item to buy it or use it</div>
+    ${msg?`<div class="fb bad">${msg}</div>`:''}` +
+    Object.entries(SHOP).map(([kind,items])=>`<h3 style="margin:18px 0 8px">${SHOP_TITLES[kind]}</h3><div class="grid shop">${items.map(it=>{
+      const own = sh.owned.includes(kind+':'+it.id), on = sh.equip[kind]===it.id;
+      return `<button class="item ${on?'on':''}" data-it="${kind}|${it.id}|${it.price}"><span class="e">${it.emoji}</span><small>${on?'✓ using':own?'owned':'🪙 '+it.price}</small></button>`; }).join('')}</div>`).join('') +
+    `<div class="row"><button class="btn" id="home">Home</button></div></div>`;
+  app.querySelectorAll('[data-it]').forEach(b=>b.onclick=()=>{
+    const [kind,id,price] = b.dataset.it.split('|'), x = shopOf(name), own = x.owned.includes(kind+':'+id);
+    if(own){ if(x.equip[kind]===id) delete x.equip[kind]; else x.equip[kind] = id; setShop(name,x); return shop(name); }
+    if(c < +price) return shop(name, `Need ${price-c} more 🪙 — keep practicing! 再加油`);
+    addCoins(name,-price); x.owned.push(kind+':'+id); x.equip[kind] = id; setShop(name,x); shop(name); burst(20);
+  });
+  $('#home').onclick = home;
+}
+
+/* ---- team goal (both kids, whole week) ---- */
+const TEAM_GOAL = 36;     // stars per week, all four daily practices added up
+const weekStart = () => { const d = new Date(); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; };
+const weekKey = () => fmtDate(weekStart());
+function teamStars(){
+  const d = load(); let n = 0;
+  for(let i=0;i<7;i++){ const day = weekStart(); day.setDate(day.getDate()+i); const t = fmtDate(day);
+    for(const sk of ['Ethan','Luke','Ethan:piano','Luke:piano']){ const r = d[sk] && d[sk][t]; if(r) n += starsOf(r.score/r.total); } }
+  return n;
+}
+const isWeekend = () => [0,6].includes(new Date().getDay()) || /[?&]boss=1/.test(location.search);
+const bossKey = () => { const d = new Date(); if(d.getDay()===0) d.setDate(d.getDate()-1); return fmtDate(d); };
+const MONSTERS = ['🐉','👾','🦖','🐙','🤖','👻'], BOSS_BADGES = ['🛡️','⚔️','🪄','🔮','🗡️','🏹'];
+const weekNo = () => Math.floor(Date.now()/604800000);
+
+/* ---- adaptive: freeze the day's plan on first start so a replay gives the same questions ---- */
+function adaptFor(sk){
+  const d = load(), t = todayStr(); d._plan = d._plan || {};
+  if(!d._plan[sk] || d._plan[sk].date!==t){
+    const hs = (d._hist||{})[sk] || {}, acc = {};
+    for(const [topic,arr] of Object.entries(hs)){ const a = arr.slice(-12); if(a.length>=6) acc[topic] = a.reduce((x,y)=>x+y,0)/a.length; }
+    d._plan[sk] = { date:t, weak:((d._weak||{})[sk]||[]).slice(0,6), acc }; save(d);
+  }
+  const pl = d._plan[sk];
+  return { weak:pl.weak, acc:t=>pl.acc[t]===undefined ? null : pl.acc[t] };
+}
 
 function home(){
-  document.body.className=''; S=null;
-  const data = load(), t = todayStr();
-  app.innerHTML = `<div class="narrow"><h1>🧮 Daily Math Practice</h1><div class="sub">${t} · pick your name</div>` +
-    Object.entries(KIDS).map(([n,k])=>{
-      const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
-        return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`; };
-      return card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano');
-    }).join('') +
-    `<div class="books">${Object.keys(KIDS).map(n=>`<button class="btn ghost" data-book="${n}">📒 ${n}'s stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>`).join('')}</div></div>`;
+  document.body.className=''; document.body.dataset.bg=''; S=null; leaveSprint();
+  const data = load(), t = todayStr(), weekend = isWeekend();
+  const ts = teamStars(), claimed = !!(data._team||{})[weekKey()];
+  let h = `<div class="narrow"><h1>🧮 Daily Practice 🎹</h1><div class="sub">${t} · pick your name</div>
+    <div class="card team"><b>🤝 Team goal this week 本週團隊目標</b>
+      <div class="prog"><i style="width:${Math.min(100,ts/TEAM_GOAL*100)}%"></i></div>
+      <div>⭐ ${ts} / ${TEAM_GOAL} ${ts>=TEAM_GOAL ? (claimed?' · 🎉 Reward claimed! 領過了':'<br><button class="btn" id="claim" style="margin-top:8px">🎁 Claim +50 🪙 for each</button>') : ` · ${TEAM_GOAL-ts} more ⭐ and you both win a bonus!`}</div></div>`;
+  for(const [n,k] of Object.entries(KIDS)){
+    const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
+      return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`; };
+    const best = ((data._sprint||{})[n]||{}).best, cleared = ((data._boss||{})[n]||{})[bossKey()];
+    h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') +
+      `<div class="books">
+        <button class="btn ghost" data-act="sprint" data-n="${n}">⏱️ 60s Sprint${best?` · best ${best}`:''}</button>
+        <button class="btn ghost" data-act="boss" data-n="${n}">${weekend?(cleared?'🐉 Boss ✅':'🐉 Weekend Boss!'):'🔒 Boss (Sat–Sun)'}</button>
+        <button class="btn ghost" data-act="book" data-n="${n}">📒 Stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>
+        <button class="btn ghost" data-act="shop" data-n="${n}">🛒 Shop · 🪙 ${coinsOf(n)}</button></div>`;
+  }
+  app.innerHTML = h + '</div>';
   app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
-  app.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>book(b.dataset.book));
+  app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+    const n = b.dataset.n, a = b.dataset.act;
+    if(a==='book') book(n); else if(a==='shop') shop(n); else if(a==='sprint') sprint(n);
+    else if(a==='boss'){ if(weekend) startBoss(n); else alert('The boss only shows up on Saturday and Sunday! 週末才會出現喔 🐉'); }
+  });
+  if($('#claim')) $('#claim').onclick = () => { const d = load(); d._team = d._team || {}; d._team[weekKey()] = true; save(d); Object.keys(KIDS).forEach(n=>addCoins(n,50)); burst(40); home(); };
 }
 
 function book(name){
-  document.body.className = KIDS[name].cls;
-  const mine = owned(name);
-  app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.filter(x=>STICKERS.includes(x)).length} / ${STICKERS.length} · finish each day's practice to unlock a sticker (3 ⭐ = 2!)<br>Streak badges: practice 3, 7, 14, 30 days in a row 🔥</div>
-    <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}${Object.entries(BONUS).map(([d,b])=>mine.includes(b)?`<div class="stk">${b}</div>`:`<div class="stk lock" title="${d}-day streak">🔥${d}</div>`).join('')}</div>
+  document.body.className = KIDS[name].cls; applyTheme(name); S = null;
+  const mine = owned(name), special = Object.values(BONUS), extras = mine.filter(x=>!STICKERS.includes(x)&&!special.includes(x));
+  app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.filter(x=>STICKERS.includes(x)).length} / ${STICKERS.length} · finish each day's practice to unlock a sticker (3 ⭐ = 2!)<br>Streak badges: practice 3, 7, 14, 30 days in a row 🔥 · Boss badges: beat the weekend boss 🐉</div>
+    <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}${Object.entries(BONUS).map(([d,b])=>mine.includes(b)?`<div class="stk">${b}</div>`:`<div class="stk lock" title="${d}-day streak">🔥${d}</div>`).join('')}${extras.map(b=>`<div class="stk">${b}</div>`).join('')}</div>
     <div class="row"><button class="btn" id="home">Home</button></div></div>`;
   $('#home').onclick = home;
 }
 
+function newSession(name, sk, subject, qs, extra){
+  return { name, sk, subject, pet: shopOf(name).equip.pet || PETS[hash(sk+todayStr())() % PETS.length], pct:0, queue:qs.map(q=>({...q})), i:0, total:qs.length,
+           first:0, stats:{}, log:[], coins:0, answered:false, input:'', extra, padOpen: innerWidth>=860 };
+}
 function start(name, extra=false, subject='math'){
   const sk = subject==='piano' ? name+':piano' : name;
+  ADAPT = adaptFor(sk);
   rnd = makeRng(`${sk}|${todayStr()}|${extra?Math.random():'daily'}`);
-  const qs = (subject==='piano' ? PIANO : KIDS)[name].build();
-  S = { name, sk, subject, pet: PETS[hash(sk+todayStr())() % PETS.length], pct:0, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
-  document.body.className = KIDS[name].cls;
+  S = newSession(name, sk, subject, (subject==='piano' ? PIANO : KIDS)[name].build(), extra);
+  document.body.className = KIDS[name].cls; applyTheme(name);
+  show();
+}
+function startBoss(name){
+  ADAPT = NOADAPT; rnd = makeRng(`${name}|boss|${bossKey()}|${Math.random()}`);
+  const qs = shuffle([...shuffle(KIDS[name].build()).slice(0,5), ...shuffle(PIANO[name].build()).slice(0,3)]);
+  S = newSession(name, name+':boss', 'boss', qs, true); S.mode = 'boss'; S.monster = MONSTERS[weekNo()%MONSTERS.length];
+  document.body.className = KIDS[name].cls; applyTheme(name);
   show();
 }
 
 function show(){
   if(S.i >= S.queue.length) return finish();
-  const q = S.queue[S.i]; S.answered=false; S.input='';
+  const q = S.queue[S.i], boss = S.mode==='boss'; S.answered=false; S.input='';
+  const head = boss
+    ? `<div class="mon ${S.hit?'hit':''}" id="mon">${S.monster}</div><div class="hp"><i style="width:${(S.total-S.first)/S.total*100}%"></i></div>`
+    : `<div class="track"><div class="rail"><i id="trail" style="width:${S.pct||0}%"></i></div><div class="pet" id="pet" style="left:${S.pct||0}%">${S.pet}</div><div class="flag">🏁</div></div>`;
+  S.hit = false;
+  const pens = shopOf(S.name).owned.filter(x=>x.startsWith('pen:')).map(x=>SHOP.pen.find(p=>'pen:'+p.id===x)).filter(Boolean);
   app.innerHTML = `
-    <div class="top"><button class="back" id="back">←</button><div class="track"><div class="rail"><i id="trail" style="width:${S.pct||0}%"></i></div><div class="pet" id="pet" style="left:${S.pct||0}%">${S.pet}</div><div class="flag">🏁</div></div><div class="count">${S.i+1}/${S.queue.length}</div></div>
+    <div class="top"><button class="back" id="back">←</button>${head}<div class="count">${S.extra?'':`🪙 ${S.coins} · `}${S.i+1}/${S.queue.length}</div></div>
     <div class="quiz ${S.padOpen?'':'nopad'}" id="quiz">
       <div class="card">
-        <span class="tag">${q.topic}</span>
+        <span class="tag">${boss?'🐉 Boss · ':''}${q.topic}</span>
         ${q.html}
         ${q.keys ? '' : q.choices ? `<div class="choices ${q.cls||''}">${q.choices.map(c=>`<button data-c="${c}">${q.choiceArt?q.choiceArt[c]:c}</button>`).join('')}</div>`
                     : `<div class="answer" id="ans" title="tap to clear"></div>
@@ -495,6 +625,7 @@ function show(){
         <div class="tools">
           ${['#e5484d','#ff9a3c','#2fb36b','#4f8cff','#8b5cf6'].map(c=>`<button data-pen="${c}" style="background:${c}"></button>`).join('')}
           <button class="rainbow" data-pen="rainbow"></button>
+          ${pens.map(p=>`<button data-pen="${p.id}">${p.emoji}</button>`).join('')}
           <button data-pen="✋" title="hand">✋</button><button data-pen="✊" title="fist">✊</button><button data-pen="👆" title="one finger">👆</button>
           <button data-pen="🍎">🍎</button><button data-pen="⭐">⭐</button>
           <button data-pen="erase">🧽</button><button id="clr">🗑️</button>
@@ -502,8 +633,10 @@ function show(){
         <canvas id="cv"></canvas>
       </div>
     </div>`;
-  const to = S.i/S.queue.length*100;   // let the pet run to its new spot
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('#pet').style.left = to+'%'; $('#trail').style.width = to+'%'; })); S.pct = to;
+  if(!boss){
+    const to = S.i/S.queue.length*100;   // let the pet run to its new spot
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ const pet = $('#pet'); if(pet){ pet.style.left = to+'%'; $('#trail').style.width = to+'%'; } })); S.pct = to;
+  }
   $('#back').onclick = () => { if(confirm('Leave this practice? Progress will be lost.')) home(); };
   let hl = 0; $('#hintBtn').onclick = () => { const h = [].concat(q.hint || ''); $('#hint').textContent = h[Math.min(hl++, h.length-1)]; };
   $('#next').onclick = next;
@@ -532,7 +665,8 @@ function setupScratch(){
   let pen = '#4f8cff', hue = 0, drawing = false, last = null;
   const sel = b => { app.querySelectorAll('[data-pen]').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); pen = b.dataset.pen; };
   app.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>sel(b));
-  sel(app.querySelector('[data-pen="#4f8cff"]'));
+  const eq = shopOf(S.name).equip.pen;
+  sel((eq && app.querySelector(`[data-pen="${eq}"]`)) || app.querySelector('[data-pen="#4f8cff"]'));
   $('#clr').onclick = () => { g.globalCompositeOperation='source-over'; g.clearRect(0,0,cv.width,cv.height); };
   const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
   cv.onpointerdown = e => {
@@ -544,9 +678,18 @@ function setupScratch(){
   cv.onpointerup = cv.onpointercancel = () => { drawing = false; };
   function stroke(x0,y0,x1,y1){
     g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1);
+    g.shadowBlur = 0;
     if(pen==='erase'){ g.globalCompositeOperation='destination-out'; g.lineWidth=28; }
-    else { g.globalCompositeOperation='source-over'; g.lineWidth=5; g.strokeStyle = pen==='rainbow' ? `hsl(${(hue+=6)%360} 90% 55%)` : pen; }
-    g.stroke();
+    else {
+      g.globalCompositeOperation='source-over'; g.lineWidth=5;
+      if(pen==='rainbow') g.strokeStyle = `hsl(${(hue+=6)%360} 90% 55%)`;
+      else if(pen==='fire'){ g.lineWidth=9; g.strokeStyle = `hsl(${Math.random()*50} 100% ${50+Math.random()*12}%)`; }
+      else if(pen==='galaxy'){ g.lineWidth=7; g.strokeStyle = `hsl(${230+Math.random()*90} 80% ${55+Math.random()*15}%)`; g.shadowColor='#a78bfa'; g.shadowBlur=12; }
+      else if(pen==='glitter'){ g.strokeStyle = '#f5c542'; }
+      else g.strokeStyle = pen;
+    }
+    g.stroke(); g.shadowBlur = 0;
+    if(pen==='glitter' && Math.random()<.3){ g.font='16px serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('✨', x1+(Math.random()-.5)*26, y1+(Math.random()-.5)*26); }
   }
 }
 
@@ -558,6 +701,12 @@ function burst(n=14){
     el.style.setProperty('--dx', (Math.random()-.5)*360+'px'); el.style.setProperty('--dy', -60-Math.random()*200+'px'); el.style.setProperty('--r', (Math.random()-.5)*180+'deg');
     document.body.appendChild(el); setTimeout(()=>el.remove(), 1200);
   }
+}
+function rain(ms=4500){   // confetti falling from the top
+  const em = ['🎉','⭐','✨','🎈','💖','🌟','🎊'];
+  const iv = setInterval(()=>{ const el = document.createElement('div'); el.className='fall'; el.textContent = em[Math.floor(Math.random()*em.length)];
+    el.style.left = Math.random()*100+'vw'; el.style.animationDuration = (2.5+Math.random()*2)+'s'; document.body.appendChild(el); setTimeout(()=>el.remove(), 5000); }, 90);
+  setTimeout(()=>clearInterval(iv), ms);
 }
 
 function key(k){
@@ -571,9 +720,9 @@ function key(k){
 
 function submit(val, btn){
   if(S.answered) return;
-  const q = S.queue[S.i], ok = String(val)===q.answer, fb = $('#fb');
+  const q = S.queue[S.i], ok = String(val)===q.answer, fb = $('#fb'), firstTry = !q.tried;
   const st = S.stats[q.topic] = S.stats[q.topic] || {right:0,total:0};
-  if(!q.tried){ q.tried = true; st.total++; if(ok){ st.right++; S.first++; } }
+  if(firstTry){ q.tried = true; st.total++; S.log.push({topic:q.topic, fact:q.fact, ok}); if(ok){ st.right++; S.first++; if(S.mode==='boss') S.hit = true; } }
   if(!ok){   // never reveal the answer: stay on this question until it's right
     fb.className='fb bad'; fb.textContent = ['Not quite — try again! 再試一次','Almost! Think again 再想想','Try once more 💪'][Math.floor(Math.random()*3)];
     if(q.choices){ btn.classList.remove('sel'); btn.classList.add('bad'); btn.disabled = true; }
@@ -581,10 +730,11 @@ function submit(val, btn){
     return;
   }
   S.answered = true;
+  if(!S.extra) S.coins += firstTry ? 2 : 1;
   if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>{ if(b.dataset.c===q.answer) b.classList.add('ok'); b.classList.remove('sel'); b.disabled=true; });
   else $('#ans').classList.add('ok');
   burst();
-  fb.className='fb ok'; fb.textContent = ['🎉 Great job! 太棒了','⭐ Correct! 答對了','👍 Yes! 對','🌟 Awesome! 好棒'][Math.floor(Math.random()*4)];
+  fb.className='fb ok'; fb.textContent = (S.mode==='boss' && firstTry ? '⚔️ Hit! ' : '') + ['🎉 Great job! 太棒了','⭐ Correct! 答對了','👍 Yes! 對','🌟 Awesome! 好棒'][Math.floor(Math.random()*4)];
   if($('#check')) $('#check').classList.add('hidden');
   $('#next').classList.remove('hidden'); $('#hintBtn').classList.add('hidden'); $('#hint').textContent='';
   $('#next').focus();
@@ -593,19 +743,31 @@ function submit(val, btn){
 function next(){ S.i++; show(); }
 
 function finish(){
-  const pct = S.first/S.total, stars = pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
-  let won = [];
+  if(S.mode==='boss') return bossFinish();
+  const pct = S.first/S.total, stars = starsOf(pct);
+  let won = [], earned = 0;
   if(!S.extra){
     const d = load(), t = todayStr(); d[S.sk] = d[S.sk] || {};
     const firstToday = !d[S.sk][t];
     if(firstToday || S.first > d[S.sk][t].score) d[S.sk][t] = { score:S.first, total:S.total, topics:S.stats };
-    if(firstToday){   // unlock a sticker (two for a perfect-ish 3-star day)
+    if(firstToday){
+      // unlock a sticker (two for a 3-star day)
       d._stickers = d._stickers || {}; const mine = d._stickers[S.name] = d._stickers[S.name] || [];
       for(let i=0;i<(stars===3?2:1);i++){ const left = STICKERS.filter(s=>!mine.includes(s)); if(!left.length) break; const s = left[Math.floor(Math.random()*left.length)]; mine.push(s); won.push(s); }
+      // remember how each topic / fact went, so tomorrow can adapt
+      d._hist = d._hist || {}; const hs = d._hist[S.sk] = d._hist[S.sk] || {};
+      d._weak = d._weak || {}; let wl = d._weak[S.sk] = d._weak[S.sk] || [];
+      S.log.forEach(e=>{
+        const a = hs[e.topic] = hs[e.topic] || []; a.push(e.ok?1:0); if(a.length>20) a.shift();
+        if(e.fact){ if(!e.ok){ if(!wl.includes(e.fact)) wl.push(e.fact); } else wl = wl.filter(f=>f!==e.fact); }
+      });
+      d._weak[S.sk] = wl.slice(-12);
     }
     save(d);
-    if(firstToday){   // streak milestone badge
-      const b = BONUS[streak(S.sk)];
+    if(firstToday){
+      earned = S.coins + 10 + (stars===3?10:0);   // per answer + finishing bonus
+      addCoins(S.name, earned);
+      const b = BONUS[streak(S.sk)];               // streak milestone badge
       if(b){ const d2 = load(); d2._stickers = d2._stickers || {}; const m = d2._stickers[S.name] = d2._stickers[S.name] || []; if(!m.includes(b)){ m.push(b); won.push(b); save(d2); } }
     }
   }
@@ -613,18 +775,101 @@ function finish(){
   app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
     <div class="card"><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
+    ${earned?`<div class="sub" style="color:var(--ink);font-weight:700;font-size:20px">🪙 +${earned} coins</div>`:''}
     ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
     <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
-    <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="book">📒 Stickers</button><button class="btn ghost" id="home">Home</button></div>
-    <div class="sub" style="margin-top:12px">🔥 ${streak(S.sk)}-day streak</div></div></div>`;
+    <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="shopb">🛒 Shop</button><button class="btn ghost" id="home">Home</button></div>
+    <div class="sub" style="margin-top:12px">🔥 ${streak(S.sk)}-day streak · 🤝 team ⭐ ${teamStars()}/${TEAM_GOAL}${S.extra?'<br>(extra practice earns no coins)':''}</div></div></div>`;
   if(stars>=2) burst(40);
   const name = S.name, subject = S.subject;
   $('#more').onclick = () => start(name, true, subject);
-  $('#book').onclick = () => book(name);
+  $('#shopb').onclick = () => shop(name);
   $('#home').onclick = home;
 }
 
+/* ---- weekend boss ---- */
+function bossFinish(){
+  const name = S.name, need = Math.ceil(S.total*.75), win = S.first>=need, monster = S.monster;
+  if(!win){
+    app.innerHTML = `<div class="narrow"><h1>${monster} ran away!</h1><div class="card"><div class="score">${S.first} / ${S.total}</div>
+      <div class="sub">You needed ${need} hits first-try. So close! 差一點點，再打一次吧 💪</div>
+      <div class="row"><button class="btn" id="again">Fight again ⚔️</button><button class="btn ghost" id="home">Home</button></div></div></div>`;
+    $('#again').onclick = () => startBoss(name); $('#home').onclick = home; return;
+  }
+  const d = load(); d._boss = d._boss || {}; d._boss[name] = d._boss[name] || {};
+  const key_ = bossKey(); let coins = 0, badge = null;
+  if(!d._boss[name][key_]){
+    d._boss[name][key_] = true; coins = 30; badge = BOSS_BADGES[weekNo()%BOSS_BADGES.length];
+    d._stickers = d._stickers || {}; const m = d._stickers[name] = d._stickers[name] || []; if(m.includes(badge)) badge = null; else m.push(badge);
+  }
+  save(d); if(coins) addCoins(name, coins);
+  const ov = document.createElement('div'); ov.className = 'victory';
+  ov.innerHTML = `<div class="trophy">🏆</div><h2>BOSS DEFEATED!</h2><div class="boom">${monster} 💥</div>
+    <div class="champ">${name} the Champion! 冠軍！</div><div>${S.first}/${S.total} hits ⚔️</div>
+    ${coins?`<div class="loot">🪙 +${coins}${badge?` &nbsp; new badge ${badge}`:''}</div>`:'<div class="loot">(already collected this weekend 這個週末領過囉)</div>'}
+    <button class="btn" id="vclose" style="margin-top:18px">Continue →</button>`;
+  document.body.appendChild(ov); rain(); burst(60);
+  $('#vclose').onclick = () => { ov.remove(); home(); };
+}
+
+/* ---- 60-second sprint ---- */
+function leaveSprint(){ if(SP){ clearInterval(SP.iv); SP = null; } }
+function sprint(name){
+  const k = KIDS[name]; document.body.className = k.cls; applyTheme(name); S = null; leaveSprint();
+  ADAPT = NOADAPT; rnd = makeRng('sprint|'+Math.random());
+  const gen = name==='Ethan'
+    ? () => qMul(ri(2,9), ri(2,9), 'x')
+    : () => { const t = ri(0,3);
+        if(t===0){ let a,b; do{ a=ri(2,9); b=ri(2,9); }while(a+b<11); return qAdd(a,b); }
+        if(t===1){ const m = ri(11,18); return qSub(m, ri(m%10+1,9)); }
+        return qMul(pick([2,3,4,4]), ri(2,9), 'x'); };
+  SP = { name, gen, score:0, miss:0, input:'', q:gen(), end:Date.now()+60000, done:false };
+  app.innerHTML = `<div class="top"><button class="back" id="back">←</button><div class="track"><div class="rail"><i id="tbar" style="width:100%;transition:width .15s linear;opacity:.8"></i></div></div><div class="count" id="tleft">60</div></div>
+    <div class="narrow"><div class="card"><span class="tag">⏱️ 60-second sprint · score <span id="sc">0</span></span>
+      <div id="sq"></div><div class="answer" id="ans"></div>
+      <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="back" style="font-size:18px">⌫ 刪除</button><button data-k="0">0</button><button data-k="go" class="go">✓</button></div>
+      <div class="fb" id="fb"></div><div class="row"><button class="btn ghost" id="skip">Skip ⏭️</button></div></div></div>`;
+  const showQ = () => { $('#sq').innerHTML = SP.q.html; SP.input = ''; $('#ans').textContent = ''; };
+  showQ();
+  $('#back').onclick = () => { leaveSprint(); home(); };
+  $('#skip').onclick = () => { SP.q = SP.gen(); showQ(); };
+  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>spKey(b.dataset.k));
+  $('#ans').onclick = () => { SP.input=''; $('#ans').textContent=''; };
+  SP.iv = setInterval(()=>{
+    const left = Math.max(0,(SP.end-Date.now())/1000);
+    $('#tbar').style.width = left/60*100+'%'; $('#tleft').textContent = Math.ceil(left);
+    if(left<=0) sprintEnd();
+  }, 100);
+}
+function spKey(k){
+  if(!SP || SP.done) return;
+  if(k==='back') SP.input = SP.input.slice(0,-1);
+  else if(k==='go'){ if(SP.input) return spSubmit(); return; }
+  else if(SP.input.length<3) SP.input += k;
+  $('#ans').textContent = SP.input;
+  if(k!=='back' && SP.input.length>=SP.q.answer.length) spSubmit();
+}
+function spSubmit(){
+  const a = $('#ans'), ok = SP.input===SP.q.answer;
+  if(ok){ SP.score++; $('#sc').textContent = SP.score; a.classList.add('ok'); setTimeout(()=>a.classList.remove('ok'),200); SP.q = SP.gen(); $('#sq').innerHTML = SP.q.html; SP.input=''; a.textContent=''; burst(2); }
+  else { SP.miss++; a.classList.add('bad'); SP.input=''; setTimeout(()=>{ a.classList.remove('bad'); a.textContent=SP.input; }, 450); }
+}
+function sprintEnd(){
+  const sp = SP; clearInterval(sp.iv); sp.done = true;
+  const d = load(), t = todayStr(); d._sprint = d._sprint || {}; const r = d._sprint[sp.name] = d._sprint[sp.name] || {best:0};
+  const prev = r.best, record = sp.score > prev;
+  if(record) r.best = sp.score;
+  let coins = 0; if(r.coinedOn!==t){ coins = Math.min(sp.score,20); r.coinedOn = t; }
+  save(d); if(coins) addCoins(sp.name, coins);
+  app.innerHTML = `<div class="narrow"><h1>⏱️ Time's up!</h1><div class="card"><div class="score">${sp.score}</div><div class="sub">correct in 60 seconds</div>
+    <div class="sub" style="color:var(--ink);font-weight:700">${record?(prev?`🎉 New record! (old record ${prev})`:'🎉 First record!'):`Your record: ${r.best}`}${coins?` · 🪙 +${coins}`:''}</div>
+    <div class="row"><button class="btn" id="again">Try again 🔁</button><button class="btn ghost" id="home">Home</button></div></div></div>`;
+  if(record) { burst(50); rain(2500); }
+  $('#again').onclick = () => sprint(sp.name); $('#home').onclick = home;
+}
+
 document.addEventListener('keydown', e=>{
+  if(SP && !SP.done){ if(/^[0-9]$/.test(e.key)) spKey(e.key); else if(e.key==='Backspace') spKey('back'); else if(e.key==='Enter') spKey('go'); return; }
   if(!S || !$('#fb')) return;
   if(/^[0-9]$/.test(e.key)) key(e.key);
   else if(e.key==='Backspace') key('back');
