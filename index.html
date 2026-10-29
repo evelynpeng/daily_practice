@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Daily Math Practice</title>
+<style>
+  :root { --accent:#4f8cff; --accent-dark:#2f6ae0; --bg:#f4f7ff; --ok:#2fb36b; --bad:#e5484d; --ink:#1f2937; }
+  body.luke { --accent:#ff9a3c; --accent-dark:#e07b14; --bg:#fff6ec; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:-apple-system,"PingFang TC","Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; -webkit-user-select:none; user-select:none; }
+  .wrap { max-width:1180px; margin:0 auto; padding:16px; }
+  .narrow { max-width:560px; margin:0 auto; }
+  h1 { text-align:center; font-size:28px; margin:12px 0 4px; }
+  .sub { text-align:center; color:#6b7280; margin-bottom:20px; }
+  .card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 4px 16px rgba(0,0,0,.07); margin-bottom:16px; }
+  .kid { display:block; width:100%; border:0; border-radius:20px; padding:22px; margin-bottom:10px; font-size:26px; font-weight:700; color:#fff; cursor:pointer; text-align:left; }
+  .kid small { display:block; font-size:14px; font-weight:500; opacity:.92; margin-top:4px; }
+  .kid.ethan { background:#4f8cff; } .kid.luke { background:#ff9a3c; }
+  .kid.done::after { content:" ✅"; }
+  .books { display:flex; gap:10px; margin-bottom:16px; } .books .btn { flex:1; font-size:17px; padding:12px 6px; }
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .back { border:0; background:none; font-size:22px; cursor:pointer; padding:4px 8px; }
+  .bar { flex:1; height:14px; background:#e5e7eb; border-radius:99px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--accent); width:0; transition:width .3s; }
+  .count { font-weight:700; color:#6b7280; min-width:56px; text-align:right; }
+  .quiz { display:grid; grid-template-columns:1fr; gap:16px; align-items:stretch; }
+  @media (min-width:860px) { .quiz { grid-template-columns:minmax(380px,.9fr) 1.1fr; } .quiz.nopad { grid-template-columns:minmax(380px,560px); justify-content:center; } }
+  .quiz .card { margin-bottom:0; }
+  .tag { display:inline-block; font-size:13px; font-weight:600; padding:3px 10px; border-radius:99px; background:var(--accent); color:#fff; }
+  .prompt { font-size:20px; font-weight:600; text-align:center; margin:10px 0; }
+  .big { font-size:52px; font-weight:800; text-align:center; margin:6px 0; letter-spacing:2px; }
+  .art { text-align:center; margin:6px 0; } .art svg { width:170px; height:170px; max-width:100%; }
+  .emoji { font-size:72px; text-align:center; }
+  .answer { height:60px; margin:8px auto; width:180px; border:3px solid var(--accent); border-radius:16px; font-size:38px; font-weight:800; display:flex; align-items:center; justify-content:center; background:#fff; }
+  .answer.ok { border-color:var(--ok); color:var(--ok); } .answer.bad { border-color:var(--bad); color:var(--bad); }
+  .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:300px; margin:8px auto 0; }
+  .pad button, .choices button, .btn { border:0; border-radius:16px; font-size:26px; font-weight:700; padding:11px 0; background:#fff; color:var(--ink); box-shadow:0 2px 0 rgba(0,0,0,.12), 0 0 0 2px #e5e7eb inset; cursor:pointer; }
+  .pad button:active, .choices button:active { transform:translateY(2px); }
+  .pad .go { background:var(--accent); color:#fff; box-shadow:0 2px 0 var(--accent-dark); }
+  .choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+  .choices button { font-size:22px; padding:16px 6px; }
+  .choices button.ok { background:var(--ok); color:#fff; } .choices button.bad { background:var(--bad); color:#fff; }
+  .btn { background:var(--accent); color:#fff; padding:12px 22px; box-shadow:0 2px 0 var(--accent-dark); font-size:20px; }
+  .btn.ghost { background:#fff; color:var(--ink); box-shadow:0 0 0 2px #e5e7eb inset; }
+  .row { display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+  .fb { text-align:center; font-size:20px; font-weight:700; min-height:28px; margin-top:6px; }
+  .fb.ok { color:var(--ok); } .fb.bad { color:var(--bad); }
+  .hint { text-align:center; color:#6b7280; font-size:16px; margin-top:4px; min-height:22px; }
+  .stars { font-size:44px; text-align:center; } .score { font-size:48px; font-weight:800; text-align:center; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; } td,th { padding:8px 4px; border-bottom:1px solid #eee; text-align:left; }
+  .weak { color:var(--bad); font-weight:700; }
+  .hidden { display:none !important; }
+  @media (max-height:900px) { .art svg { width:140px; height:140px; } .big { font-size:44px; } .pad button { padding:8px 0; font-size:24px; } .answer { height:52px; } }
+  /* scratch pad */
+  .scr { background:#fffdf5; border:3px dashed var(--accent); border-radius:20px; padding:10px; display:flex; flex-direction:column; }
+  .tools { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:8px; }
+  .tools button { width:44px; height:44px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px #d1d5db; font-size:22px; cursor:pointer; padding:0; background:#fff; }
+  .tools button.sel { box-shadow:0 0 0 3px var(--ink); transform:scale(1.1); }
+  .tools .rainbow { background:conic-gradient(red,orange,yellow,lime,cyan,blue,magenta,red); }
+  #cv { width:100%; height:260px; flex:1; border-radius:12px; touch-action:none; cursor:crosshair; display:block;
+        background:repeating-linear-gradient(0deg,transparent 0 31px,#eef2ff 31px 32px); }
+  @media (min-width:860px) { #cv { height:min(560px, calc(100vh - 190px)); } }
+  .pop { position:fixed; font-size:28px; pointer-events:none; z-index:99; animation:pop 1.1s ease-out forwards; }
+  @keyframes pop { to { transform:translate(var(--dx),var(--dy)) rotate(var(--r)); opacity:0; } }
+  /* stickers */
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .stk { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:46px; background:#fff; border-radius:18px; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+  .stk.lock { filter:grayscale(1); opacity:.35; font-size:36px; }
+  .newstk { font-size:90px; text-align:center; animation:bounce .8s ease infinite alternate; }
+  @keyframes bounce { to { transform:translateY(-12px) scale(1.08); } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ============ helpers ============ */
+const $ = (s, el=document) => el.querySelector(s);
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+function hash(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; } return ()=>{ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); return (h^=h>>>16)>>>0; }; }
+function makeRng(seedStr){ let a = hash(seedStr)(); return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let rnd = Math.random;
+const ri = (lo,hi) => lo + Math.floor(rnd()*(hi-lo+1));
+const pick = a => a[Math.floor(rnd()*a.length)];
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pad2 = n => String(n).padStart(2,'0');
+
+/* ============ storage ============ */
+const KEY = 'kidsMathPractice:v1';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } };
+const save = d => localStorage.setItem(KEY, JSON.stringify(d));
+const fmtDate = x => `${x.getFullYear()}-${pad2(x.getMonth()+1)}-${pad2(x.getDate())}`;
+function streak(name){
+  const days = load()[name] || {}; let n = 0; const d = new Date();
+  if(!days[fmtDate(d)]) d.setDate(d.getDate()-1);
+  while(days[fmtDate(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+const STICKERS = ['🦄','🐶','🐱','🦊','🐼','🐯','🦁','🐸','🐙','🦖','🚀','🏆','🌈','🍕','⚽','🎸','🦋','🐬','🚒','🏰','🎨','🍦','🤖','👑'];
+const owned = name => (load()._stickers||{})[name] || [];
+
+/* ============ SVG art ============ */
+const SHAPES = {
+  triangle:{name:'triangle',sides:3}, square:{name:'square',sides:4}, rectangle:{name:'rectangle',sides:4},
+  pentagon:{name:'pentagon',sides:5}, hexagon:{name:'hexagon',sides:6}, circle:{name:'circle',sides:0}
+};
+function polyPts(n, start){ const p=[]; for(let i=0;i<n;i++){ const a=(start+i*360/n)*Math.PI/180; p.push((60+48*Math.cos(a)).toFixed(1)+','+(60+48*Math.sin(a)).toFixed(1)); } return p.join(' '); }
+const FILL = 'fill="#bcd4ff" stroke="#2f6ae0" stroke-width="3" stroke-linejoin="round"';
+const txt = (x,y,s,sz=13) => `<text x="${x}" y="${y}" font-size="${sz}" font-weight="700" text-anchor="middle" fill="#1f2937">${s}</text>`;
+function shapeSVG(kind){
+  let inner;
+  if(kind==='circle') inner = `<circle cx="60" cy="60" r="46" ${FILL}/>`;
+  else if(kind==='square') inner = `<rect x="18" y="18" width="84" height="84" ${FILL}/>`;
+  else if(kind==='rectangle') inner = `<rect x="8" y="30" width="104" height="60" ${FILL}/>`;
+  else if(kind==='triangle') inner = `<polygon points="${polyPts(3,-90)}" ${FILL}/>`;
+  else if(kind==='pentagon') inner = `<polygon points="${polyPts(5,-90)}" ${FILL}/>`;
+  else inner = `<polygon points="${polyPts(6,0)}" ${FILL}/>`;
+  return `<svg viewBox="0 0 120 120">${inner}</svg>`;
+}
+function rectLabelSVG(w,h){ // all four sides labelled; kept inside the 120x120 box
+  const W=16+w*8, H=16+h*6, x=(120-W)/2, y=(120-H)/2;
+  return `<svg viewBox="0 0 120 120"><rect x="${x}" y="${y}" width="${W}" height="${H}" ${FILL}/>${txt(60,y-5,w)}${txt(60,y+H+15,w)}${txt(x-9,64,h)}${txt(x+W+9,64,h)}</svg>`;
+}
+function triLabelSVG(a,b,c){
+  return `<svg viewBox="0 0 120 120"><polygon points="60,16 108,96 12,96" ${FILL}/>${txt(26,52,a)}${txt(94,52,b)}${txt(60,113,c)}</svg>`;
+}
+function fracSVG(kind, n){ // first part shaded
+  if(kind==='rect'){
+    const w=100/n; let s=`<rect x="10" y="30" width="100" height="60" fill="#fff" stroke="#2f6ae0" stroke-width="3"/><rect x="10" y="30" width="${w}" height="60" fill="#ffd166" stroke="#2f6ae0" stroke-width="3"/>`;
+    for(let i=1;i<n;i++) s+=`<line x1="${10+w*i}" y1="30" x2="${10+w*i}" y2="90" stroke="#2f6ae0" stroke-width="3"/>`;
+    return `<svg viewBox="0 0 120 120">${s}</svg>`;
+  }
+  const pt=a=>[60+46*Math.cos(a*Math.PI/180),60+46*Math.sin(a*Math.PI/180)];
+  const [x0,y0]=pt(-90),[x1,y1]=pt(-90+360/n);
+  let s=`<circle cx="60" cy="60" r="46" fill="#fff" stroke="#2f6ae0" stroke-width="3"/>`;
+  s+=`<path d="M60 60 L${x0} ${y0} A46 46 0 0 1 ${x1} ${y1} Z" fill="#ffd166" stroke="#2f6ae0" stroke-width="3"/>`;
+  for(let i=0;i<n;i++){ const [x,y]=pt(-90+i*360/n); s+=`<line x1="60" y1="60" x2="${x}" y2="${y}" stroke="#2f6ae0" stroke-width="3"/>`; }
+  return `<svg viewBox="0 0 120 120">${s}</svg>`;
+}
+function gridSVG(r,c){ // rectangle covered by equal squares
+  const cell=Math.min(100/c, 90/r), W=cell*c, H=cell*r, x0=(120-W)/2, y0=(120-H)/2; let s='';
+  for(let i=0;i<r;i++) for(let j=0;j<c;j++) s+=`<rect x="${x0+j*cell}" y="${y0+i*cell}" width="${cell}" height="${cell}" fill="#bcd4ff" stroke="#2f6ae0" stroke-width="2"/>`;
+  return `<svg viewBox="0 0 120 120">${s}</svg>`;
+}
+function dotsSVG(r,c){
+  const gap=Math.min(20,90/Math.max(r,c)), x0=60-(c-1)*gap/2, y0=60-(r-1)*gap/2; let s='';
+  for(let i=0;i<r;i++) for(let j=0;j<c;j++) s+=`<circle cx="${x0+j*gap}" cy="${y0+i*gap}" r="6" fill="#ff7a59"/>`;
+  return `<svg viewBox="0 0 120 120">${s}</svg>`;
+}
+function clockSVG(h,m){
+  let s=`<circle cx="60" cy="60" r="56" fill="#fff" stroke="#2f6ae0" stroke-width="3"/>`;
+  for(let i=1;i<=12;i++){ const a=(i*30-90)*Math.PI/180; s+=txt((60+44*Math.cos(a)).toFixed(1),(60+44*Math.sin(a)+4).toFixed(1),i,11); }
+  const hand=(deg,len,w,col)=>{ const a=(deg-90)*Math.PI/180; return `<line x1="60" y1="60" x2="${60+len*Math.cos(a)}" y2="${60+len*Math.sin(a)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`; };
+  s+=hand(((h%12)+m/60)*30,26,5,'#1f2937')+hand(m*6,38,3,'#e5484d')+`<circle cx="60" cy="60" r="3" fill="#1f2937"/>`;
+  return `<svg viewBox="0 0 120 120">${s}</svg>`;
+}
+
+/* ============ question builders ============ */
+// question: {topic, html, answer, choices?, hint (string | [gentle, more])}
+function choice(topic, text, art, answer, pool, hint, count=4){
+  const opts = shuffle([answer, ...shuffle([...new Set(pool)].filter(p=>p!==answer)).slice(0,count-1)]);
+  return { topic, html:`<div class="prompt">${text}</div>${art?`<div class="art">${art}</div>`:''}`, answer, choices:opts, hint };
+}
+function numQ(topic, text, art, ans, hint){ return { topic, html:`<div class="prompt">${text}</div>${art?`<div class="art">${art}</div>`:''}`, answer:String(ans), hint }; }
+function uniq(n, make){ const seen=new Set(), out=[]; let guard=0; while(out.length<n && guard++<500){ const q=make(); if(!seen.has(q.html)){ seen.add(q.html); out.push(q); } } return out; }
+
+function skipHint(a){
+  return [`Try skip counting by ${a}. How many jumps do you need?`,
+          a===4 ? `Try double-double: double the other number, then double it again.` : `Start skip counting: ${a}, ${a*2}, ${a*3}… keep going.`];
+}
+function qMul(a,b,topic){
+  const [x,y] = rnd()<.5 ? [b,a] : [a,b];
+  return { topic, html:`<div class="big">${x} × ${y} = ?</div>`, answer:String(a*b), hint:skipHint(a) };
+}
+function qMissing(a,b,topic){ return { topic, html:`<div class="big">${a} × ? = ${a*b}</div>`, answer:String(b), hint:skipHint(a) }; }
+function qAdd(a,b){ return { topic:'Add 進位', html:`<div class="big">${a} + ${b} = ?</div><div class="hint">先湊成 10 (make 10 first)</div>`, answer:String(a+b), hint:['Can you make a 10 first?',`How much does ${a} need to reach 10? Take that from ${b}.`] }; }
+function qSub(m,s){ return { topic:'Subtract 退位', html:`<div class="big">${m} − ${s} = ?</div><div class="hint">先減到 10 (break at 10)</div>`, answer:String(m-s), hint:['Use 10 as a stepping stone.','First take away just enough to land on 10, then take away the rest.'] }; }
+
+/* --- Geometry (Ethan's weak area) --- */
+function qName(){
+  const k = pick(Object.keys(SHAPES));
+  return choice('Geometry','What shape is this?', shapeSVG(k), SHAPES[k].name, Object.values(SHAPES).map(s=>s.name), 'Count the sides and corners.');
+}
+function qSides(){
+  const k = pick(['triangle','square','rectangle','pentagon','hexagon']), corners = rnd()<.5;
+  return choice('Geometry',`How many ${corners?'corners (vertices)':'sides'} does this shape have?`, shapeSVG(k), String(SHAPES[k].sides), ['3','4','5','6','8','0'], `Touch each ${corners?'corner':'side'} and count.`);
+}
+function qPerim(){
+  const h = 'Perimeter is the distance all the way around. Check every side.';
+  if(rnd()<.6){ const w=ri(2,9), hh=rnd()<.3?w:ri(2,9); return numQ('Geometry','Add all the sides.<br>What is the perimeter?', rectLabelSVG(w,hh), 2*(w+hh), h); }
+  const a=ri(3,9), b=ri(3,9), c=ri(3,9);
+  return numQ('Geometry','Add all the sides.<br>What is the perimeter?', triLabelSVG(a,b,c), a+b+c, h);
+}
+function qFrac(){
+  const n = pick([2,3,4]), word = {2:'1/2 (a half)',3:'1/3 (a third)',4:'1/4 (a fourth)'};
+  return choice('Geometry','What fraction is shaded yellow?', fracSVG(pick(['rect','circle']),n), word[n], Object.values(word), 'Count all the equal parts. One is shaded.', 3);
+}
+function q3D(){
+  const items = [['🎲','cube'],['⚽','sphere'],['🥫','cylinder'],['🍦','cone'],['📦','rectangular prism']];
+  const [e,n] = pick(items);
+  return choice('Geometry','What 3D shape does this look like?', `<div class="emoji">${e}</div>`, n, items.map(i=>i[1]), 'Is it round? Does it have flat faces?');
+}
+function qGrid(){
+  const r=ri(2,4), c=ri(2,5);
+  return numQ('Geometry','This rectangle is covered by equal squares.<br>How many squares are there?', gridSVG(r,c), r*c, ['Count the squares in one row. How many rows are there?','Add the rows together.']);
+}
+const RIDDLES = [
+  ['I have 3 sides and 3 corners.','triangle','2D'], ['I have 4 equal sides and 4 square corners.','square','2D'],
+  ['I have 4 square corners. Two sides are long and two are short.','rectangle','2D'], ['I have 5 sides.','pentagon','2D'],
+  ['I have 6 sides.','hexagon','2D'], ['I am round and have no corners.','circle','2D'],
+  ['Any shape with 4 sides is called a…','quadrilateral','2D'],
+  ['I have 6 flat square faces.','cube','3D'], ['I roll and have no flat faces.','sphere','3D'],
+  ['I have 2 flat circle faces and a curved side.','cylinder','3D'], ['I have 1 flat circle face and a pointy top.','cone','3D']
+];
+function qRiddle(){
+  const [t,a,d] = pick(RIDDLES);
+  const pool = d==='2D' ? ['triangle','square','rectangle','pentagon','hexagon','circle','quadrilateral'] : ['cube','sphere','cylinder','cone'];
+  return choice('Geometry',`Who am I?<br><span style="font-weight:500">${t}</span>`, '', a, pool, 'Think about sides, corners and faces.');
+}
+
+/* --- Number & Operations (approaching Grade 2) --- */
+function qPlace(){
+  const t = ri(0,2);
+  if(t===0){ const h=ri(1,9), te=ri(0,9), o=ri(1,9); return { topic:'Number & Ops', html:`<div class="prompt">Put the pieces together</div><div class="big" style="font-size:36px">${h*100} + ${te*10} + ${o} = ?</div>`, answer:String(h*100+te*10+o), hint:['Hundreds, tens and ones each go in their own spot.','Write each part in its place.'] }; }
+  const ds = shuffle([1,2,3,4,5,6,7,8,9]).slice(0,3), n = ds[0]*100+ds[1]*10+ds[2];
+  const p = ri(1,2), dig = ds[p-1];
+  const val = p===1 ? dig*100 : dig*10, place = p===1 ? 'hundreds' : 'tens';
+  if(t===1) return choice('Number & Ops',`In <b>${n}</b>, what is the value of the digit <b>${dig}</b>?`, '', String(val), [String(dig),String(dig*10),String(dig*100)], 'Which place is it in?', 3);
+  return choice('Number & Ops',`In <b>${n}</b>, the digit <b>${dig}</b> is in the ___ place.`, '', place, ['ones','tens','hundreds'], 'Read the number from the right: ones, tens, hundreds.', 3);
+}
+function qCompare(){
+  let a=ri(100,999), b=ri(100,999); if(rnd()<.5) b = a%100 + (ri(1,9)*100); // same last two digits
+  const ans = a>b?'>':a<b?'<':'=';
+  return choice('Number & Ops',`Which sign makes it true?`, `<div class="big" style="font-size:44px">${a} ◯ ${b}</div>`, ans, ['>','<','='], 'Compare the hundreds first. Same? Then tens.', 3);
+}
+function qAddSub100(){
+  if(rnd()<.55){ let a,b; do{ a=ri(15,69); b=ri(15,39);}while(a%10+b%10<10||a+b>99); return { topic:'Number & Ops', html:`<div class="big">${a} + ${b} = ?</div>`, answer:String(a+b), hint:['Break the numbers into tens and ones.','Add the tens, add the ones, then put them together.'] }; }
+  let m,s; do{ m=ri(51,95); s=ri(15,m-10);}while(s%10<=m%10);
+  return { topic:'Number & Ops', html:`<div class="big">${m} − ${s} = ?</div>`, answer:String(m-s), hint:['You may need to trade 1 ten for 10 ones.','Take away the tens, then the ones.'] };
+}
+function qSkip(){
+  const step = pick([5,10,100]), start = step===100 ? ri(1,4)*100 : step*ri(1,6);
+  const seq = [0,1,2].map(i=>start+i*step);
+  return numQ('Number & Ops',`Keep counting!<br><span style="font-size:30px;font-weight:800">${seq.join(', ')}, ?</span>`, '', start+3*step, 'How much does it grow each time?');
+}
+
+/* --- Algebraic thinking (Grade 2) --- */
+function qEvenOdd(){
+  const n = ri(3,20);
+  return choice('Algebra',`Is <b>${n}</b> an even or an odd number?`, '', n%2?'odd':'even', ['even','odd'], ['Make pairs. Is anyone left alone?','Look at the last digit.'], 2);
+}
+function qMissAdd(){
+  if(rnd()<.5){ const b=ri(3,9), t=ri(b+3,20); return numQ('Algebra', 'What number goes in the box?', `<div class="big">□ + ${b} = ${t}</div>`, t-b, 'Which number plus that one makes the total?'); }
+  const t=ri(8,20), b=ri(2,t-2); return numQ('Algebra','What number goes in the box?', `<div class="big">${t} − □ = ${b}</div>`, t-b, 'Start from the answer and add it back.');
+}
+function qArray(){
+  const r=ri(2,5), c=ri(2,5);
+  return numQ('Algebra','How many dots are there?', dotsSVG(r,c), r*c, ['Count one row. How many equal rows are there?',`Try adding the rows: ${Array(r).fill('□').join(' + ')}`]);
+}
+
+/* --- Measurement & Data (Grade 2) --- */
+function qClock(){
+  const h = ri(1,12), m = ri(0,11)*5, f = (hh,mm)=>`${hh}:${pad2(mm)}`;
+  const ans = f(h,m), c = new Set([ f(h%12+1,m), f((h+10)%12+1,m), f(h,(m+30)%60), f(h,(m+5)%60), f(h,(m+55)%60) ]); c.delete(ans);
+  if(m>0 && m/5<=12) c.add(f(m/5,(h*5)%60));  // hands mixed up
+  c.delete(ans);
+  return choice('Measurement','What time does the clock show?', clockSVG(h,m), ans, [...c], ['The short hand shows the hour. The long hand shows the minutes.','Each number on the clock is 5 minutes.']);
+}
+function qMoney(){
+  const q=ri(0,2), d=ri(0,3), n=ri(0,2), p=ri(1,4), total=q*25+d*10+n*5+p;
+  const parts = [[q,'quarter'],[d,'dime'],[n,'nickel'],[p,'penny']].filter(x=>x[0]).map(([k,w])=>`${k} ${k>1?(w==='penny'?'pennies':w+'s'):w}`);
+  return numQ('Measurement',`You have ${parts.join(', ').replace(/, ([^,]*)$/,' and $1')}.<br>How many cents is that?`, '', total, ['Start with the coin worth the most.','Quarter 25¢ · dime 10¢ · nickel 5¢ · penny 1¢']);
+}
+function qLength(){
+  const a=ri(12,30), b=ri(3,9);
+  if(rnd()<.5) return numQ('Measurement',`A red ribbon is ${a} cm long. A blue ribbon is ${b} cm long.<br>How much <b>longer</b> is the red ribbon?`, '', a-b, 'Longer-than means find the difference.');
+  return numQ('Measurement',`A pencil is ${a} cm long. A crayon is ${b} cm long.<br>If you line them up end to end, how long are they together?`, '', a+b, 'Together means put them together.');
+}
+
+/* ============ kid profiles ============ */
+const KIDS = {
+  Ethan: {
+    cls:'ethan', desc:'Grade 2 · Multiplication · Number & Ops · Geometry · Algebra · Measurement (30 questions)',
+    build(){
+      const seen = new Set(), mul = [];
+      while(mul.length<15){
+        const a = rnd()<.6 ? ri(6,9) : ri(1,9), b = ri(1,9), k = Math.min(a,b)+'x'+Math.max(a,b);
+        if(seen.has(k)) continue; seen.add(k);
+        mul.push(mul.length%5===4 ? qMissing(a,b,'Multiply 1–9') : qMul(a,b,'Multiply 1–9'));
+      }
+      // teacher feedback: Number & Ops approaching, Geometry needs work, Algebra + Measurement at grade level
+      return shuffle([
+        ...mul,
+        ...uniq(1,qPlace), ...uniq(1,qCompare), ...uniq(1,qAddSub100), ...uniq(1,qSkip),
+        ...uniq(1,qName), ...uniq(1,qSides), ...uniq(1,qPerim), ...uniq(1,qFrac), ...uniq(1,qGrid), ...uniq(1,qRiddle), ...uniq(1,q3D),
+        ...uniq(1,rnd()<.5?qEvenOdd:qMissAdd), ...uniq(1,qArray),
+        ...uniq(1,qClock), ...uniq(1,rnd()<.5?qMoney:qLength)
+      ]);
+    }
+  },
+  Luke: {
+    cls:'luke', desc:'Grade 1 · Add/Subtract within 20 (進位/退位) + ×2 ×3 ×4 (12 questions)',
+    build(){
+      const adds = [], subs = [], mul = [];
+      const seenA=new Set(); while(adds.length<3){ const a=ri(2,9), b=ri(2,9); if(a+b<11) continue; const k=Math.min(a,b)+'+'+Math.max(a,b); if(seenA.has(k)) continue; seenA.add(k); adds.push(qAdd(a,b)); }
+      const seenS=new Set(); while(subs.length<3){ const m=ri(11,18), s=ri(m%10+1,9); if(s<=m%10) continue; const k=m+'-'+s; if(seenS.has(k)) continue; seenS.add(k); subs.push(qSub(m,s)); }
+      const seenM=new Set(); const add=(a,b)=>{ const k=a+'x'+b; if(seenM.has(k)) return; seenM.add(k); mul.push(qMul(a,b,'Multiply ×'+a)); };
+      // ×4 is the weak spot: half of the multiplication set
+      while(mul.filter(q=>q.topic==='Multiply ×4').length<3) add(4,ri(2,9));
+      while(mul.filter(q=>q.topic==='Multiply ×3').length<2) add(3,ri(2,9));
+      while(mul.filter(q=>q.topic==='Multiply ×2').length<1) add(2,ri(2,9));
+      return shuffle([...adds,...subs,...mul]);
+    }
+  }
+};
+
+/* ============ app ============ */
+const app = $('#app');
+let S = null;
+
+function home(){
+  document.body.className=''; S=null;
+  const data = load(), t = todayStr();
+  app.innerHTML = `<div class="narrow"><h1>🧮 Daily Math Practice</h1><div class="sub">${t} · pick your name</div>` +
+    Object.entries(KIDS).map(([n,k])=>{
+      const done = data[n] && data[n][t];
+      return `<button class="kid ${k.cls} ${done?'done':''}" data-n="${n}">${n}<small>${k.desc}</small><small>🔥 ${streak(n)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`;
+    }).join('') +
+    `<div class="books">${Object.keys(KIDS).map(n=>`<button class="btn ghost" data-book="${n}">📒 ${n}'s stickers (${owned(n).length}/${STICKERS.length})</button>`).join('')}</div></div>`;
+  app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n));
+  app.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>book(b.dataset.book));
+}
+
+function book(name){
+  document.body.className = KIDS[name].cls;
+  const mine = owned(name);
+  app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.length} / ${STICKERS.length} · finish each day's practice to unlock a new sticker (3 ⭐ = 2 stickers!)</div>
+    <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}</div>
+    <div class="row"><button class="btn" id="home">Home</button></div></div>`;
+  $('#home').onclick = home;
+}
+
+function start(name, extra=false){
+  rnd = makeRng(`${name}|${todayStr()}|${extra?Math.random():'daily'}`);
+  const qs = KIDS[name].build();
+  S = { name, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
+  document.body.className = KIDS[name].cls;
+  show();
+}
+
+function show(){
+  if(S.i >= S.queue.length) return finish();
+  const q = S.queue[S.i]; S.answered=false; S.input='';
+  app.innerHTML = `
+    <div class="top"><button class="back" id="back">←</button><div class="bar"><i style="width:${S.i/S.queue.length*100}%"></i></div><div class="count">${S.i+1}/${S.queue.length}</div></div>
+    <div class="quiz ${S.padOpen?'':'nopad'}" id="quiz">
+      <div class="card">
+        <span class="tag">${q.topic}</span>
+        ${q.html}
+        ${q.choices ? `<div class="choices">${q.choices.map(c=>`<button data-c="${c}">${c}</button>`).join('')}</div>`
+                    : `<div class="answer" id="ans"></div>
+                       <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}
+                         <button data-k="back">⌫</button><button data-k="0">0</button><button data-k="go" class="go">✓</button></div>`}
+        <div class="fb" id="fb"></div>
+        <div class="hint" id="hint"></div>
+        <div class="row"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn ghost" id="padBtn">✏️ Draw</button><button class="btn hidden" id="next">Next →</button></div>
+      </div>
+      <div class="scr ${S.padOpen?'':'hidden'}" id="scratch">
+        <div class="tools">
+          ${['#e5484d','#ff9a3c','#2fb36b','#4f8cff','#8b5cf6'].map(c=>`<button data-pen="${c}" style="background:${c}"></button>`).join('')}
+          <button class="rainbow" data-pen="rainbow"></button>
+          <button data-pen="✋" title="hand">✋</button><button data-pen="✊" title="fist">✊</button><button data-pen="👆" title="one finger">👆</button>
+          <button data-pen="🍎">🍎</button><button data-pen="⭐">⭐</button>
+          <button data-pen="erase">🧽</button><button id="clr">🗑️</button>
+        </div>
+        <canvas id="cv"></canvas>
+      </div>
+    </div>`;
+  $('#back').onclick = () => { if(confirm('Leave this practice? Progress will be lost.')) home(); };
+  let hl = 0; $('#hintBtn').onclick = () => { const h = [].concat(q.hint || ''); $('#hint').textContent = h[Math.min(hl++, h.length-1)]; };
+  $('#next').onclick = next;
+  $('#padBtn').onclick = () => { S.padOpen = !S.padOpen; $('#scratch').classList.toggle('hidden', !S.padOpen); $('#quiz').classList.toggle('nopad', !S.padOpen); if(S.padOpen) setupScratch(); };
+  if(S.padOpen) setupScratch();
+  if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>submit(b.dataset.c, b));
+  else app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k));
+}
+
+function setupScratch(){
+  const cv = $('#cv'), dpr = window.devicePixelRatio||1;
+  cv.width = cv.clientWidth*dpr; cv.height = cv.clientHeight*dpr;
+  const g = cv.getContext('2d'); g.scale(dpr,dpr); g.lineCap='round'; g.lineJoin='round';
+  const STAMPS = ['🍎','⭐','✋','✊','👆'];
+  let pen = '#4f8cff', hue = 0, drawing = false, last = null;
+  const sel = b => { app.querySelectorAll('[data-pen]').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); pen = b.dataset.pen; };
+  app.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>sel(b));
+  sel(app.querySelector('[data-pen="#4f8cff"]'));
+  $('#clr').onclick = () => { g.globalCompositeOperation='source-over'; g.clearRect(0,0,cv.width,cv.height); };
+  const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+  cv.onpointerdown = e => {
+    cv.setPointerCapture(e.pointerId); const [x,y] = pos(e);
+    if(STAMPS.includes(pen)){ g.globalCompositeOperation='source-over'; g.font = (pen==='🍎'||pen==='⭐'?'40px':'96px')+' serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(pen,x,y); return; }
+    drawing = true; last = [x,y]; stroke(x,y,x,y);
+  };
+  cv.onpointermove = e => { if(!drawing) return; const [x,y] = pos(e); stroke(last[0],last[1],x,y); last=[x,y]; };
+  cv.onpointerup = cv.onpointercancel = () => { drawing = false; };
+  function stroke(x0,y0,x1,y1){
+    g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1);
+    if(pen==='erase'){ g.globalCompositeOperation='destination-out'; g.lineWidth=28; }
+    else { g.globalCompositeOperation='source-over'; g.lineWidth=5; g.strokeStyle = pen==='rainbow' ? `hsl(${(hue+=6)%360} 90% 55%)` : pen; }
+    g.stroke();
+  }
+}
+
+function burst(n=14){
+  const em = ['⭐','🎉','✨','🌈','🎈','💫'];
+  for(let i=0;i<n;i++){
+    const el = document.createElement('div'); el.className='pop'; el.textContent = em[Math.floor(Math.random()*em.length)];
+    el.style.left = (innerWidth/2 + (Math.random()-.5)*120) + 'px'; el.style.top = (innerHeight/2 + (Math.random()-.5)*80) + 'px';
+    el.style.setProperty('--dx', (Math.random()-.5)*360+'px'); el.style.setProperty('--dy', -60-Math.random()*200+'px'); el.style.setProperty('--r', (Math.random()-.5)*180+'deg');
+    document.body.appendChild(el); setTimeout(()=>el.remove(), 1200);
+  }
+}
+
+function key(k){
+  if(S.answered){ if(k==='go') next(); return; }
+  if(k==='back') S.input = S.input.slice(0,-1);
+  else if(k==='go'){ if(S.input) submit(S.input); return; }
+  else if(S.input.length<3) S.input += k;
+  $('#ans').textContent = S.input;
+}
+
+function submit(val, btn){
+  if(S.answered) return;
+  const q = S.queue[S.i], ok = String(val)===q.answer, fb = $('#fb');
+  const st = S.stats[q.topic] = S.stats[q.topic] || {right:0,total:0};
+  if(!q.tried){ q.tried = true; st.total++; if(ok){ st.right++; S.first++; } }
+  if(!ok){   // never reveal the answer: stay on this question until it's right
+    fb.className='fb bad'; fb.textContent = ['Not quite — try again! 再試一次','Almost! Think again 再想想','Try once more 💪'][Math.floor(Math.random()*3)];
+    if(q.choices){ btn.classList.add('bad'); btn.disabled = true; }
+    else { const a = $('#ans'); a.classList.add('bad'); S.input=''; setTimeout(()=>{ a.classList.remove('bad'); a.textContent=S.input; }, 700); }
+    return;
+  }
+  S.answered = true;
+  if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>{ if(b.dataset.c===q.answer) b.classList.add('ok'); b.disabled=true; });
+  else $('#ans').classList.add('ok');
+  burst();
+  fb.className='fb ok'; fb.textContent = ['🎉 Great job! 太棒了','⭐ Correct! 答對了','👍 Yes! 對','🌟 Awesome! 好棒'][Math.floor(Math.random()*4)];
+  $('#next').classList.remove('hidden'); $('#hintBtn').classList.add('hidden'); $('#hint').textContent='';
+  $('#next').focus();
+}
+
+function next(){ S.i++; show(); }
+
+function finish(){
+  const pct = S.first/S.total, stars = pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
+  let won = [];
+  if(!S.extra){
+    const d = load(), t = todayStr(); d[S.name] = d[S.name] || {};
+    const firstToday = !d[S.name][t];
+    if(firstToday || S.first > d[S.name][t].score) d[S.name][t] = { score:S.first, total:S.total, topics:S.stats };
+    if(firstToday){   // unlock a sticker (two for a perfect-ish 3-star day)
+      d._stickers = d._stickers || {}; const mine = d._stickers[S.name] = d._stickers[S.name] || [];
+      for(let i=0;i<(stars===3?2:1);i++){ const left = STICKERS.filter(s=>!mine.includes(s)); if(!left.length) break; const s = left[Math.floor(Math.random()*left.length)]; mine.push(s); won.push(s); }
+    }
+    save(d);
+  }
+  const rows = Object.entries(S.stats).map(([t,s])=>{ const weak = s.right/s.total < .7; return `<tr><td>${t}</td><td class="${weak?'weak':''}">${s.right}/${s.total}${weak?' ← practice more':''}</td></tr>`; }).join('');
+  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! 🎊</h1>
+    <div class="card"><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
+    ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
+    <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
+    <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="book">📒 Stickers</button><button class="btn ghost" id="home">Home</button></div>
+    <div class="sub" style="margin-top:12px">🔥 ${streak(S.name)}-day streak</div></div></div>`;
+  if(stars>=2) burst(40);
+  const name = S.name;
+  $('#more').onclick = () => start(name, true);
+  $('#book').onclick = () => book(name);
+  $('#home').onclick = home;
+}
+
+document.addEventListener('keydown', e=>{
+  if(!S || !$('#fb')) return;
+  if(/^[0-9]$/.test(e.key)) key(e.key);
+  else if(e.key==='Backspace') key('back');
+  else if(e.key==='Enter'){ S.answered ? next() : key('go'); }
+});
+
+home();
+</script>
+</body>
+</html>
