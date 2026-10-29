@@ -21,6 +21,12 @@
   .books { display:flex; gap:10px; margin-bottom:16px; } .books .btn { flex:1; font-size:17px; padding:12px 6px; }
   .top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .back { border:0; background:none; font-size:22px; cursor:pointer; padding:4px 8px; }
+  .track { flex:1; position:relative; height:40px; display:flex; align-items:center; margin:0 8px; }
+  .rail { position:absolute; left:0; right:0; height:14px; background:#e5e7eb; border-radius:99px; overflow:hidden; }
+  .rail i { display:block; height:100%; background:var(--accent); width:0; transition:width .8s ease; opacity:.55; }
+  .pet { position:absolute; top:0; font-size:32px; line-height:40px; transition:left .8s ease; margin-left:-16px; animation:hop .3s ease-in-out infinite alternate; }
+  .flag { position:absolute; right:-6px; top:0; font-size:26px; line-height:40px; }
+  @keyframes hop { from { transform:translateY(0) rotate(-4deg); } to { transform:translateY(-7px) rotate(4deg); } }
   .bar { flex:1; height:14px; background:#e5e7eb; border-radius:99px; overflow:hidden; }
   .bar i { display:block; height:100%; background:var(--accent); width:0; transition:width .3s; }
   .count { font-weight:700; color:#6b7280; min-width:56px; text-align:right; }
@@ -386,6 +392,10 @@ function pSolfege(p,P){
   if(t===2) return choice('Solfège','Which note is this? 這是哪個音？', `<div class="staff">${staffSVG(stepOf(p,c),c)}</div>`, sol, SOLF, staffHint(c));
   return choice('Solfège',`<b>${sol}</b> is which letter? ${sol} 是哪個字母？`,'', let_, P.letters, 'C D E F G A B  =  do re mi fa so la si');
 }
+function pEar(p,P){
+  return { topic:'Ear → key', html:`<div class="prompt">Listen 🔊 and tap the key you hear<br>聽聽看，按下你聽到的琴鍵</div><div class="art"><button class="btn" id="listenBig" style="font-size:26px">🔊 Play</button></div><div class="art kb">${keyboardSVG(null,true)}</div>`,
+           answer:String(p), choices:Array.from({length:15},(_, i)=>String(i)), keys:true, autoplay:true, hint:['Low sounds are on the left, high sounds on the right.','Tap a key to hear it, then compare with the sound you were given.'] };
+}
 // give inline art staff the same card-art class as other art
 const _choice = choice;
 choice = function(topic, text, art, answer, pool, hint, count=4){
@@ -400,8 +410,8 @@ const PIANO = {
     build(){
       const P = { letters:LETTERS };
       const notes = shuffle(Array.from({length:15},(_, i)=>i)).slice(0,10);     // 10 of the 15 notes C3…C5, different each day
-      const types = shuffle([pKeyName,pKeyName,pStaffName,pStaffName,pSolfege,pSolfege,pNameKey,pStaffKey,pKeyStaff,pNameStaff]);
-      return types.map((f,i)=>f(notes[i],P));
+      const types = shuffle([pKeyName,pEar,pStaffName,pStaffName,pSolfege,pSolfege,pNameKey,pStaffKey,pKeyStaff,pNameStaff]);
+      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; return q; });
     }
   },
   Luke: {
@@ -409,11 +419,24 @@ const PIANO = {
     build(){
       const P = { letters:['C','D','E','F','G'] };
       const notes = shuffle([0,1,2,3,4,7,8,9,10,11]);                         // C–G below and above middle C
-      const types = shuffle([pKeyName,pKeyName,pStaffName,pStaffName,pNameKey,pNameKey,pStaffKey,pStaffKey,pKeyStaff,pNameStaff]);
-      return types.map((f,i)=>f(notes[i],P));
+      const types = shuffle([pKeyName,pEar,pStaffName,pStaffName,pNameKey,pNameKey,pStaffKey,pStaffKey,pKeyStaff,pNameStaff]);
+      return types.map((f,i)=>{ const q=f(notes[i],P); q.pitch=notes[i]; return q; });
     }
   }
 };
+
+/* ============ sound & pets ============ */
+let AC = null;
+function tone(p){   // piano-ish tone for white-key pitch p (0 = C3, 7 = middle C)
+  try {
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+    const m = 48 + 12*Math.floor(p/7) + [0,2,4,5,7,9,11][p%7], f = 440*Math.pow(2,(m-69)/12), t = AC.currentTime;
+    const g = AC.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.35,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+1.5); g.connect(AC.destination);
+    [[1,1,'triangle'],[2,.3,'sine'],[3,.12,'sine']].forEach(([mul,a,type])=>{ const o=AC.createOscillator(), og=AC.createGain(); o.type=type; o.frequency.value=f*mul; og.gain.value=a; o.connect(og); og.connect(g); o.start(t); o.stop(t+1.6); });
+  } catch(e) {}
+}
+const PETS = ['🐶','🐱','🐰','🐻','🦊','🐼','🐯','🐹','🐨','🐸'];
+const BONUS = {3:'🥉',7:'🥈',14:'🥇',30:'💎'};   // streak-day badges
 
 /* ============ app ============ */
 const app = $('#app');
@@ -428,7 +451,7 @@ function home(){
         return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`; };
       return card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano');
     }).join('') +
-    `<div class="books">${Object.keys(KIDS).map(n=>`<button class="btn ghost" data-book="${n}">📒 ${n}'s stickers (${owned(n).length}/${STICKERS.length})</button>`).join('')}</div></div>`;
+    `<div class="books">${Object.keys(KIDS).map(n=>`<button class="btn ghost" data-book="${n}">📒 ${n}'s stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>`).join('')}</div></div>`;
   app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
   app.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>book(b.dataset.book));
 }
@@ -436,8 +459,8 @@ function home(){
 function book(name){
   document.body.className = KIDS[name].cls;
   const mine = owned(name);
-  app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.length} / ${STICKERS.length} · finish each day's practice to unlock a new sticker (3 ⭐ = 2 stickers!)</div>
-    <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}</div>
+  app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.filter(x=>STICKERS.includes(x)).length} / ${STICKERS.length} · finish each day's practice to unlock a sticker (3 ⭐ = 2!)<br>Streak badges: practice 3, 7, 14, 30 days in a row 🔥</div>
+    <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}${Object.entries(BONUS).map(([d,b])=>mine.includes(b)?`<div class="stk">${b}</div>`:`<div class="stk lock" title="${d}-day streak">🔥${d}</div>`).join('')}</div>
     <div class="row"><button class="btn" id="home">Home</button></div></div>`;
   $('#home').onclick = home;
 }
@@ -446,7 +469,7 @@ function start(name, extra=false, subject='math'){
   const sk = subject==='piano' ? name+':piano' : name;
   rnd = makeRng(`${sk}|${todayStr()}|${extra?Math.random():'daily'}`);
   const qs = (subject==='piano' ? PIANO : KIDS)[name].build();
-  S = { name, sk, subject, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
+  S = { name, sk, subject, pet: PETS[hash(sk+todayStr())() % PETS.length], pct:0, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
   document.body.className = KIDS[name].cls;
   show();
 }
@@ -455,7 +478,7 @@ function show(){
   if(S.i >= S.queue.length) return finish();
   const q = S.queue[S.i]; S.answered=false; S.input='';
   app.innerHTML = `
-    <div class="top"><button class="back" id="back">←</button><div class="bar"><i style="width:${S.i/S.queue.length*100}%"></i></div><div class="count">${S.i+1}/${S.queue.length}</div></div>
+    <div class="top"><button class="back" id="back">←</button><div class="track"><div class="rail"><i id="trail" style="width:${S.pct||0}%"></i></div><div class="pet" id="pet" style="left:${S.pct||0}%">${S.pet}</div><div class="flag">🏁</div></div><div class="count">${S.i+1}/${S.queue.length}</div></div>
     <div class="quiz ${S.padOpen?'':'nopad'}" id="quiz">
       <div class="card">
         <span class="tag">${q.topic}</span>
@@ -466,7 +489,7 @@ function show(){
                          <button data-k="back" style="font-size:18px">⌫ 刪除</button><button data-k="0">0</button><button data-k="go" class="go">✓</button></div>`}
         <div class="fb" id="fb"></div>
         <div class="hint" id="hint"></div>
-        <div class="row"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn ghost" id="padBtn">✏️ Draw</button>${q.choices?'<button class="btn" id="check" disabled>✓ Check</button>':''}<button class="btn hidden" id="next">Next →</button></div>
+        <div class="row"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn ghost" id="padBtn">✏️ Draw</button>${q.pitch!==undefined?'<button class="btn ghost" id="listen">🔊 Listen</button>':''}${q.choices?'<button class="btn" id="check" disabled>✓ Check</button>':''}<button class="btn hidden" id="next">Next →</button></div>
       </div>
       <div class="scr ${S.padOpen?'':'hidden'}" id="scratch">
         <div class="tools">
@@ -479,15 +502,21 @@ function show(){
         <canvas id="cv"></canvas>
       </div>
     </div>`;
+  const to = S.i/S.queue.length*100;   // let the pet run to its new spot
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('#pet').style.left = to+'%'; $('#trail').style.width = to+'%'; })); S.pct = to;
   $('#back').onclick = () => { if(confirm('Leave this practice? Progress will be lost.')) home(); };
   let hl = 0; $('#hintBtn').onclick = () => { const h = [].concat(q.hint || ''); $('#hint').textContent = h[Math.min(hl++, h.length-1)]; };
   $('#next').onclick = next;
   $('#padBtn').onclick = () => { S.padOpen = !S.padOpen; $('#scratch').classList.toggle('hidden', !S.padOpen); $('#quiz').classList.toggle('nopad', !S.padOpen); if(S.padOpen) setupScratch(); };
   if(S.padOpen) setupScratch();
+  if($('#listen')) $('#listen').onclick = () => tone(q.pitch);
+  if($('#listenBig')) $('#listenBig').onclick = () => tone(q.pitch);
+  if(q.autoplay) setTimeout(()=>tone(q.pitch), 350);
   if(q.choices){   // tap to select (can change your mind), then press ✓ Check
     S.sel = null;
     app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
       if(S.answered || b.classList.contains('bad')) return;
+      if(q.keys) tone(+b.dataset.c);
       if(S.sel) S.sel.classList.remove('sel'); S.sel = b; b.classList.add('sel'); $('#check').disabled = false;
     });
     $('#check').onclick = () => { if(S.sel && !S.answered){ const b = S.sel; S.sel = null; $('#check').disabled = true; submit(b.dataset.c, b); } };
@@ -575,6 +604,10 @@ function finish(){
       for(let i=0;i<(stars===3?2:1);i++){ const left = STICKERS.filter(s=>!mine.includes(s)); if(!left.length) break; const s = left[Math.floor(Math.random()*left.length)]; mine.push(s); won.push(s); }
     }
     save(d);
+    if(firstToday){   // streak milestone badge
+      const b = BONUS[streak(S.sk)];
+      if(b){ const d2 = load(); d2._stickers = d2._stickers || {}; const m = d2._stickers[S.name] = d2._stickers[S.name] || []; if(!m.includes(b)){ m.push(b); won.push(b); save(d2); } }
+    }
   }
   const rows = Object.entries(S.stats).map(([t,s])=>{ const weak = s.right/s.total < .7; return `<tr><td>${t}</td><td class="${weak?'weak':''}">${s.right}/${s.total}${weak?' ← practice more':''}</td></tr>`; }).join('');
   app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
