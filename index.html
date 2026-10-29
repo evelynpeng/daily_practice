@@ -51,6 +51,14 @@
   table { width:100%; border-collapse:collapse; margin-top:8px; } td,th { padding:8px 4px; border-bottom:1px solid #eee; text-align:left; }
   .weak { color:var(--bad); font-weight:700; }
   .hidden { display:none !important; }
+  .btn:disabled { opacity:.35; cursor:default; }
+  .choices button.sel { background:#eef4ff; box-shadow:0 0 0 4px var(--accent) inset; }
+  .choices.staffs { grid-template-columns:repeat(3,1fr); } .choices.staffs button { padding:4px; } .choices.staffs svg { width:100%; display:block; }
+  .kid.piano { filter:brightness(.92) saturate(1.1); }
+  .kb svg { width:100%; max-width:560px; } .kb { text-align:center; }
+  .art.staff svg { width:300px; max-width:100%; height:auto; }
+  .key { fill:#fff; stroke:#374151; stroke-width:1.5; cursor:pointer; } .key.hi { fill:#ffd166; } .key.sel { fill:#bcd4ff; }
+  .key.ok { fill:#7ddba3; } .key.bad { fill:#f5a3a6; pointer-events:none; }
   @media (max-height:900px) { .art svg { width:140px; height:140px; } .big { font-size:44px; } .pad button { padding:8px 0; font-size:24px; } .answer { height:52px; } }
   /* scratch pad */
   .scr { background:#fffdf5; border:3px dashed var(--accent); border-radius:20px; padding:10px; display:flex; flex-direction:column; }
@@ -158,10 +166,10 @@ function clockSVG(h,m){
 
 /* ============ question builders ============ */
 // question: {topic, html, answer, choices?, hint (string | [gentle, more])}
-function choice(topic, text, art, answer, pool, hint, count=4){
+var choice = function(topic, text, art, answer, pool, hint, count=4){
   const opts = shuffle([answer, ...shuffle([...new Set(pool)].filter(p=>p!==answer)).slice(0,count-1)]);
   return { topic, html:`<div class="prompt">${text}</div>${art?`<div class="art">${art}</div>`:''}`, answer, choices:opts, hint };
-}
+};
 function numQ(topic, text, art, ans, hint){ return { topic, html:`<div class="prompt">${text}</div>${art?`<div class="art">${art}</div>`:''}`, answer:String(ans), hint }; }
 function uniq(n, make){ const seen=new Set(), out=[]; let guard=0; while(out.length<n && guard++<500){ const q=make(); if(!seen.has(q.html)){ seen.add(q.html); out.push(q); } } return out; }
 
@@ -315,6 +323,88 @@ const KIDS = {
   }
 };
 
+
+/* ============ Piano practice ============ */
+// index 0..7 = C4 D4 E4 F4 G4 A4 B4 C5 ; step: 0 = bottom staff line (E4)
+const NOTES = [
+  {l:'C',s:'do',step:-2},{l:'D',s:'re',step:-1},{l:'E',s:'mi',step:0},{l:'F',s:'fa',step:1},
+  {l:'G',s:'so',step:2},{l:'A',s:'la',step:3},{l:'B',s:'si',step:4},{l:'C',s:'do',step:5}
+];
+const nmz = i => i===0 ? 'middle C' : i===7 ? 'high C' : NOTES[i].l;
+function staffSVG(step){
+  const y = 70 - step*6; let g='';
+  for(let i=0;i<5;i++) g+=`<line x1="6" y1="${22+i*12}" x2="174" y2="${22+i*12}" stroke="#374151" stroke-width="1.3"/>`;
+  g+=`<text x="8" y="80" font-size="103" fill="#1f2937" font-family="'Apple Symbols','Noto Music','Segoe UI Symbol',serif">\u{1D11E}</text>`;
+  if(step<=-2) g+=`<line x1="104" y1="${y}" x2="138" y2="${y}" stroke="#374151" stroke-width="1.5"/>`;
+  g+= step>=4 ? `<line x1="112.7" y1="${y}" x2="112.7" y2="${y+34}" stroke="#1f2937" stroke-width="2"/>`
+              : `<line x1="127.3" y1="${y}" x2="127.3" y2="${y-34}" stroke="#1f2937" stroke-width="2"/>`;
+  g+=`<ellipse cx="120" cy="${y}" rx="8.5" ry="6.2" fill="#1f2937" transform="rotate(-20 120 ${y})"/>`;
+  return `<svg viewBox="0 0 180 100">${g}</svg>`;
+}
+function keyboardSVG(hi, interactive=false){
+  let g='';
+  for(let w=0;w<8;w++) g+=`<rect class="key${w===hi?' hi':''}" ${interactive?`data-c="${w}"`:'style="cursor:default"'} x="${w*28+1}" y="1" width="28" height="98" rx="3"/>`;
+  for(const w of [0,1,3,4,5]) g+=`<rect x="${(w+1)*28-8}" y="1" width="18" height="60" rx="2" fill="#1f2937" style="pointer-events:none"/>`;
+  return `<svg viewBox="0 0 226 100">${g}</svg>`;
+}
+const KEY_HINT = ['Look at the black keys: C is the white key just left of the group of 2. F is just left of the group of 3.','The white keys go C D E F G A B, then C again.'];
+const STAFF_HINT = ['Lines from the bottom: E G B D F. Spaces from the bottom: F A C E.','Middle C sits on its own little line below the staff.'];
+const P_PROMPT = 'Which note is this? 這是哪個音？';
+
+function pKeyName(n,P){ return choice('Key → name', P_PROMPT, `<div class="kb">${keyboardSVG(n)}</div>`, NOTES[n].l, P.letters, KEY_HINT); }
+function pStaffName(n,P){ return choice('Staff → name', P_PROMPT, `<div class="staff">${staffSVG(NOTES[n].step)}</div>`, NOTES[n].l, P.letters, STAFF_HINT); }
+function pNameKey(n,P){
+  return { topic:'Name → key', html:`<div class="prompt">Tap the key for <b>${nmz(n)}</b><br>按下 ${nmz(n)} 的琴鍵</div><div class="art kb">${keyboardSVG(null,true)}</div>`,
+           answer:String(n), choices:P.range.map(String), keys:true, hint:KEY_HINT };
+}
+function pStaffKey(n,P){
+  return { topic:'Staff → key', html:`<div class="prompt">Tap this note on the keyboard<br>在琴鍵上按下這個音</div><div class="art staff">${staffSVG(NOTES[n].step)}</div><div class="art kb">${keyboardSVG(null,true)}</div>`,
+           answer:String(n), choices:P.range.map(String), keys:true, hint:[...STAFF_HINT,...KEY_HINT] };
+}
+function staffChoices(topic, text, art, n, P, hint){
+  const q = choice(topic, text, art, String(n), P.range.map(String), hint, 3);
+  q.cls='staffs'; q.choiceArt = Object.fromEntries(P.range.map(i=>[String(i), staffSVG(NOTES[i].step)]));
+  return q;
+}
+function pKeyStaff(n,P){ return staffChoices('Key → staff','Which staff shows this key? 哪個譜是這個琴鍵？',`<div class="kb">${keyboardSVG(n)}</div>`, n, P, [...KEY_HINT,...STAFF_HINT]); }
+function pNameStaff(n,P){ return staffChoices('Name → staff',`Which staff shows <b>${nmz(n)}</b>? 哪個譜是 ${nmz(n)}？`,'', n, P, STAFF_HINT); }
+function pSolfege(n,P){
+  const SOL = ['do','re','mi','fa','so','la','si'], sol = NOTES[n].s, let_ = NOTES[n].l;
+  const t = ri(0,3);
+  if(t===0) return choice('Solfège',`<b>${nmz(n)}</b> is which one?`,'', sol, SOL, 'C D E F G A B  =  do re mi fa so la si');
+  if(t===1) return choice('Solfège','Which note is this? 這是哪個音？', `<div class="kb">${keyboardSVG(n)}</div>`, sol, SOL, KEY_HINT);
+  if(t===2) return choice('Solfège','Which note is this? 這是哪個音？', `<div class="staff">${staffSVG(NOTES[n].step)}</div>`, sol, SOL, STAFF_HINT);
+  return choice('Solfège',`<b>${sol}</b> is which letter? ${sol} 是哪個字母？`,'', let_, P.letters, 'C D E F G A B  =  do re mi fa so la si');
+}
+// the piano staves are drawn inline, so give them the same card-art class as other art
+const _choice = choice;
+choice = function(topic, text, art, answer, pool, hint, count=4){
+  const q = _choice(topic, text, art, answer, pool, hint, count);
+  q.html = q.html.replace(/<div class="staff">/g,'<div class="art staff">');
+  return q;
+};
+
+const PIANO = {
+  Ethan: {
+    desc:'Piano · do re mi fa so la si do · C D E F G A B · keyboard & staff (10 questions)',
+    build(){
+      const P = { range:[0,1,2,3,4,5,6,7], letters:['C','D','E','F','G','A','B'] };
+      const notes = shuffle([...P.range, ri(0,7), ri(0,7)]);
+      const types = shuffle([pKeyName,pKeyName,pStaffName,pStaffName,pSolfege,pSolfege,pNameKey,pStaffKey,pKeyStaff,pNameStaff]);
+      return types.map((f,i)=>f(notes[i],P));
+    }
+  },
+  Luke: {
+    desc:'Piano · C D E F G · keyboard & staff (10 questions)',
+    build(){
+      const P = { range:[0,1,2,3,4], letters:['C','D','E','F','G'] };
+      const notes = shuffle([...P.range,...P.range]);
+      const types = shuffle([pKeyName,pKeyName,pStaffName,pStaffName,pNameKey,pNameKey,pStaffKey,pStaffKey,pKeyStaff,pNameStaff]);
+      return types.map((f,i)=>f(notes[i],P));
+    }
+  }
+};
+
 /* ============ app ============ */
 const app = $('#app');
 let S = null;
@@ -324,11 +414,12 @@ function home(){
   const data = load(), t = todayStr();
   app.innerHTML = `<div class="narrow"><h1>🧮 Daily Math Practice</h1><div class="sub">${t} · pick your name</div>` +
     Object.entries(KIDS).map(([n,k])=>{
-      const done = data[n] && data[n][t];
-      return `<button class="kid ${k.cls} ${done?'done':''}" data-n="${n}">${n}<small>${k.desc}</small><small>🔥 ${streak(n)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`;
+      const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
+        return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small></button>`; };
+      return card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano');
     }).join('') +
     `<div class="books">${Object.keys(KIDS).map(n=>`<button class="btn ghost" data-book="${n}">📒 ${n}'s stickers (${owned(n).length}/${STICKERS.length})</button>`).join('')}</div></div>`;
-  app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n));
+  app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
   app.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>book(b.dataset.book));
 }
 
@@ -341,10 +432,11 @@ function book(name){
   $('#home').onclick = home;
 }
 
-function start(name, extra=false){
-  rnd = makeRng(`${name}|${todayStr()}|${extra?Math.random():'daily'}`);
-  const qs = KIDS[name].build();
-  S = { name, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
+function start(name, extra=false, subject='math'){
+  const sk = subject==='piano' ? name+':piano' : name;
+  rnd = makeRng(`${sk}|${todayStr()}|${extra?Math.random():'daily'}`);
+  const qs = (subject==='piano' ? PIANO : KIDS)[name].build();
+  S = { name, sk, subject, queue:qs.map(q=>({...q})), i:0, total:qs.length, first:0, stats:{}, answered:false, input:'', extra, padOpen: innerWidth>=860 };
   document.body.className = KIDS[name].cls;
   show();
 }
@@ -358,13 +450,13 @@ function show(){
       <div class="card">
         <span class="tag">${q.topic}</span>
         ${q.html}
-        ${q.choices ? `<div class="choices">${q.choices.map(c=>`<button data-c="${c}">${c}</button>`).join('')}</div>`
+        ${q.keys ? '' : q.choices ? `<div class="choices ${q.cls||''}">${q.choices.map(c=>`<button data-c="${c}">${q.choiceArt?q.choiceArt[c]:c}</button>`).join('')}</div>`
                     : `<div class="answer" id="ans"></div>
                        <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}
                          <button data-k="back">⌫</button><button data-k="0">0</button><button data-k="go" class="go">✓</button></div>`}
         <div class="fb" id="fb"></div>
         <div class="hint" id="hint"></div>
-        <div class="row"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn ghost" id="padBtn">✏️ Draw</button><button class="btn hidden" id="next">Next →</button></div>
+        <div class="row"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn ghost" id="padBtn">✏️ Draw</button>${q.choices?'<button class="btn" id="check" disabled>✓ Check</button>':''}<button class="btn hidden" id="next">Next →</button></div>
       </div>
       <div class="scr ${S.padOpen?'':'hidden'}" id="scratch">
         <div class="tools">
@@ -382,7 +474,14 @@ function show(){
   $('#next').onclick = next;
   $('#padBtn').onclick = () => { S.padOpen = !S.padOpen; $('#scratch').classList.toggle('hidden', !S.padOpen); $('#quiz').classList.toggle('nopad', !S.padOpen); if(S.padOpen) setupScratch(); };
   if(S.padOpen) setupScratch();
-  if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>submit(b.dataset.c, b));
+  if(q.choices){   // tap to select (can change your mind), then press ✓ Check
+    S.sel = null;
+    app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+      if(S.answered || b.classList.contains('bad')) return;
+      if(S.sel) S.sel.classList.remove('sel'); S.sel = b; b.classList.add('sel'); $('#check').disabled = false;
+    });
+    $('#check').onclick = () => { if(S.sel && !S.answered){ const b = S.sel; S.sel = null; $('#check').disabled = true; submit(b.dataset.c, b); } };
+  }
   else app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k));
 }
 
@@ -423,6 +522,7 @@ function burst(n=14){
 }
 
 function key(k){
+  if(!$('#ans') && !S.answered) return;
   if(S.answered){ if(k==='go') next(); return; }
   if(k==='back') S.input = S.input.slice(0,-1);
   else if(k==='go'){ if(S.input) submit(S.input); return; }
@@ -437,15 +537,16 @@ function submit(val, btn){
   if(!q.tried){ q.tried = true; st.total++; if(ok){ st.right++; S.first++; } }
   if(!ok){   // never reveal the answer: stay on this question until it's right
     fb.className='fb bad'; fb.textContent = ['Not quite — try again! 再試一次','Almost! Think again 再想想','Try once more 💪'][Math.floor(Math.random()*3)];
-    if(q.choices){ btn.classList.add('bad'); btn.disabled = true; }
+    if(q.choices){ btn.classList.remove('sel'); btn.classList.add('bad'); btn.disabled = true; }
     else { const a = $('#ans'); a.classList.add('bad'); S.input=''; setTimeout(()=>{ a.classList.remove('bad'); a.textContent=S.input; }, 700); }
     return;
   }
   S.answered = true;
-  if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>{ if(b.dataset.c===q.answer) b.classList.add('ok'); b.disabled=true; });
+  if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>{ if(b.dataset.c===q.answer) b.classList.add('ok'); b.classList.remove('sel'); b.disabled=true; });
   else $('#ans').classList.add('ok');
   burst();
   fb.className='fb ok'; fb.textContent = ['🎉 Great job! 太棒了','⭐ Correct! 答對了','👍 Yes! 對','🌟 Awesome! 好棒'][Math.floor(Math.random()*4)];
+  if($('#check')) $('#check').classList.add('hidden');
   $('#next').classList.remove('hidden'); $('#hintBtn').classList.add('hidden'); $('#hint').textContent='';
   $('#next').focus();
 }
@@ -456,9 +557,9 @@ function finish(){
   const pct = S.first/S.total, stars = pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
   let won = [];
   if(!S.extra){
-    const d = load(), t = todayStr(); d[S.name] = d[S.name] || {};
-    const firstToday = !d[S.name][t];
-    if(firstToday || S.first > d[S.name][t].score) d[S.name][t] = { score:S.first, total:S.total, topics:S.stats };
+    const d = load(), t = todayStr(); d[S.sk] = d[S.sk] || {};
+    const firstToday = !d[S.sk][t];
+    if(firstToday || S.first > d[S.sk][t].score) d[S.sk][t] = { score:S.first, total:S.total, topics:S.stats };
     if(firstToday){   // unlock a sticker (two for a perfect-ish 3-star day)
       d._stickers = d._stickers || {}; const mine = d._stickers[S.name] = d._stickers[S.name] || [];
       for(let i=0;i<(stars===3?2:1);i++){ const left = STICKERS.filter(s=>!mine.includes(s)); if(!left.length) break; const s = left[Math.floor(Math.random()*left.length)]; mine.push(s); won.push(s); }
@@ -466,16 +567,16 @@ function finish(){
     save(d);
   }
   const rows = Object.entries(S.stats).map(([t,s])=>{ const weak = s.right/s.total < .7; return `<tr><td>${t}</td><td class="${weak?'weak':''}">${s.right}/${s.total}${weak?' ← practice more':''}</td></tr>`; }).join('');
-  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! 🎊</h1>
+  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
     <div class="card"><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
     ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
     <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
     <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="book">📒 Stickers</button><button class="btn ghost" id="home">Home</button></div>
-    <div class="sub" style="margin-top:12px">🔥 ${streak(S.name)}-day streak</div></div></div>`;
+    <div class="sub" style="margin-top:12px">🔥 ${streak(S.sk)}-day streak</div></div></div>`;
   if(stars>=2) burst(40);
-  const name = S.name;
-  $('#more').onclick = () => start(name, true);
+  const name = S.name, subject = S.subject;
+  $('#more').onclick = () => start(name, true, subject);
   $('#book').onclick = () => book(name);
   $('#home').onclick = home;
 }
@@ -484,7 +585,7 @@ document.addEventListener('keydown', e=>{
   if(!S || !$('#fb')) return;
   if(/^[0-9]$/.test(e.key)) key(e.key);
   else if(e.key==='Backspace') key('back');
-  else if(e.key==='Enter'){ S.answered ? next() : key('go'); }
+  else if(e.key==='Enter'){ if(S.answered) next(); else if($('#check')) $('#check').click(); else key('go'); }
 });
 
 home();
