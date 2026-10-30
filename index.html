@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#4f8cff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Practice">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Daily Math Practice</title>
 <style>
   :root { --accent:#4f8cff; --accent-dark:#2f6ae0; --bg:#f4f7ff; --ok:#2fb36b; --bad:#e5484d; --ink:#1f2937; }
@@ -876,6 +883,7 @@ document.addEventListener('keydown', e=>{
   else if(e.key==='Enter'){ if(S.answered) next(); else if($('#check')) $('#check').click(); else key('go'); }
 });
 
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 home();
 </script>
 </body>

@@ -1,0 +1,14 @@
+{
+  "name": "Daily Practice",
+  "short_name": "Practice",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f7ff",
+  "theme_color": "#4f8cff",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
