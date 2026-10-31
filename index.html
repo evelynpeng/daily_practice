@@ -88,6 +88,7 @@
   @media (min-width:860px) { #cv { height:min(560px, calc(100vh - 190px)); } }
   .pop { position:fixed; font-size:28px; pointer-events:none; z-index:99; animation:pop 1.1s ease-out forwards; }
   @keyframes pop { to { transform:translate(var(--dx),var(--dy)) rotate(var(--r)); opacity:0; } }
+  textarea { width:100%; margin-top:8px; padding:10px; border-radius:12px; border:2px solid #e5e7eb; font:13px/1.3 ui-monospace,Menlo,monospace; -webkit-user-select:text; user-select:text; word-break:break-all; }
   .ver { text-align:center; color:#9ca3af; font-size:13px; margin:18px 0 6px; }
   /* shop, team, themes, boss */
   .books { flex-wrap:wrap; } .books .btn { flex:1 1 45%; }
@@ -513,7 +514,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v6 · 2026-10-30';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v7 · 2026-10-30';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
@@ -576,6 +577,51 @@ function adaptFor(sk){
   return { weak:pl.weak, acc:t=>pl.acc[t]===undefined ? null : pl.acc[t] };
 }
 
+/* ---- backup / sync between iPads (copy a code from one, paste it into the other) ---- */
+function exportCode(){ const d = load(); delete d._plan; return 'DP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(d)))); }
+function parseCode(t){ t = t.replace(/\s+/g,''); if(!t.startsWith('DP1:')) throw new Error('bad'); return JSON.parse(decodeURIComponent(escape(atob(t.slice(4))))); }
+function mergeInto(local, inc){   // never loses anything: unions, max, or "best of both"
+  const out = JSON.parse(JSON.stringify(local)); let added = 0;
+  for(const [k,v] of Object.entries(inc)){
+    if(k==='_plan') continue;
+    if(k==='_stickers'){ out._stickers = out._stickers||{}; for(const [n,arr] of Object.entries(v)){ const m = out._stickers[n] = out._stickers[n]||[]; arr.forEach(x=>{ if(!m.includes(x)){ m.push(x); added++; } }); } }
+    else if(k==='_coins'){ out._coins = out._coins||{}; for(const [n,c] of Object.entries(v)) out._coins[n] = Math.max(out._coins[n]||0, c); }
+    else if(k==='_shop'){ out._shop = out._shop||{}; for(const [n,x] of Object.entries(v)){ const m = out._shop[n] = out._shop[n]||{owned:[],equip:{}}; (x.owned||[]).forEach(o=>{ if(!m.owned.includes(o)) m.owned.push(o); }); m.equip = Object.assign({}, x.equip||{}, m.equip||{}); } }
+    else if(k==='_team'){ out._team = Object.assign({}, v, out._team||{}); }
+    else if(k==='_boss'){ out._boss = out._boss||{}; for(const [n,w] of Object.entries(v)) out._boss[n] = Object.assign({}, w, out._boss[n]||{}); }
+    else if(k==='_sprint'){ out._sprint = out._sprint||{}; for(const [n,r] of Object.entries(v)){ const m = out._sprint[n] = out._sprint[n]||{best:0}; m.best = Math.max(m.best||0, r.best||0); if((r.coinedOn||'')>(m.coinedOn||'')) m.coinedOn = r.coinedOn; } }
+    else if(k==='_hist'){ out._hist = out._hist||{}; for(const [sk,topics] of Object.entries(v)){ const m = out._hist[sk] = out._hist[sk]||{}; for(const [t,arr] of Object.entries(topics)) if(!m[t] || arr.length>m[t].length) m[t] = arr; } }
+    else if(k==='_weak'){ out._weak = out._weak||{}; for(const [sk,arr] of Object.entries(v)){ const m = out._weak[sk] = out._weak[sk]||[]; arr.forEach(f=>{ if(!m.includes(f)) m.push(f); }); out._weak[sk] = m.slice(-12); } }
+    else if(k[0]==='_'){ /* unknown extras: keep ours */ }
+    else { out[k] = out[k]||{}; for(const [date,r] of Object.entries(v)){ const mine = out[k][date]; if(!mine){ out[k][date] = r; added++; } else if(r.score>mine.score) out[k][date] = r; } }   // daily records
+  }
+  return { out, added };
+}
+function sync(msg=''){
+  document.body.className=''; document.body.dataset.bg=''; S=null;
+  const code = exportCode();
+  app.innerHTML = `<div class="narrow"><h1>🔄 Backup &amp; Sync 同步與備份</h1>
+    <div class="sub">Each iPad keeps its own progress. Copy the code from one iPad and paste it into the other to share stars, stickers and coins.<br>每台 iPad 各存自己的進度，用文字代碼互相交換。</div>
+    ${msg?`<div class="card" style="text-align:center;font-weight:700">${msg}</div>`:''}
+    <div class="card"><b>1️⃣ Send this iPad's progress 匯出</b>
+      <textarea id="out" readonly rows="4">${code}</textarea>
+      <div class="row"><button class="btn" id="copy">📋 Copy 複製</button><button class="btn ghost" id="share">📤 Share 分享</button></div></div>
+    <div class="card"><b>2️⃣ Bring in the other iPad's progress 匯入</b>
+      <textarea id="inp" rows="4" placeholder="Paste the code here 貼上代碼"></textarea>
+      <div class="row"><button class="btn" id="merge">➕ Merge 合併</button></div>
+      <div class="sub" style="margin:8px 0 0">Merging only adds things — nothing on this iPad is deleted.<br>合併只會增加，不會刪掉這台的任何資料。</div></div>
+    <div class="row"><button class="btn ghost" id="home">Home</button></div></div>`;
+  $('#home').onclick = home;
+  $('#copy').onclick = () => { const t = $('#out'); t.select(); t.setSelectionRange(0, 1e9);
+    (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).catch(()=>{ try{ document.execCommand('copy'); }catch(e){} }).then(()=>{ $('#copy').textContent = '✅ Copied 已複製'; }); };
+  if(navigator.share) $('#share').onclick = () => navigator.share({ text: code }).catch(()=>{}); else $('#share').classList.add('hidden');
+  $('#merge').onclick = () => {
+    let inc; try { inc = parseCode($('#inp').value); } catch(e) { return sync("That doesn't look like a code. 看不懂這段文字，請整段重新複製"); }
+    const { out, added } = mergeInto(load(), inc); save(out);
+    sync(`✅ Merged! 合併完成 · ${added} new item${added===1?'':'s'} 新增`);
+  };
+}
+
 function home(){
   document.body.className=''; document.body.dataset.bg=''; S=null; leaveSprint();
   const data = load(), t = todayStr(), weekend = isWeekend();
@@ -595,7 +641,8 @@ function home(){
         <button class="btn ghost" data-act="book" data-n="${n}">📒 Stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>
         <button class="btn ghost" data-act="shop" data-n="${n}">🛒 Shop · 🪙 ${coinsOf(n)}</button></div>`;
   }
-  app.innerHTML = h + `<div class="ver">Version ${APP_VERSION}</div></div>`;
+  app.innerHTML = h + `<div class="row"><button class="btn ghost" id="syncb" style="font-size:16px">🔄 Backup / Sync 同步與備份</button></div><div class="ver">Version ${APP_VERSION}</div></div>`;
+  $('#syncb').onclick = () => sync();
   app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
   app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
     const n = b.dataset.n, a = b.dataset.act;
