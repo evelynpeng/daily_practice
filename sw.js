@@ -1,6 +1,6 @@
 // Offline cache: after one visit online, the app opens with no network at all.
 // Bump CACHE when you want every device to drop old files.
-const CACHE = 'daily-practice-v3';
+const CACHE = 'daily-practice-v4';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -27,7 +27,9 @@
   .kid.done::after { content:" ✅"; }
   .books { display:flex; gap:10px; margin-bottom:16px; } .books .btn { flex:1; font-size:17px; padding:12px 6px; }
   .top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .back { border:0; background:none; font-size:22px; cursor:pointer; padding:4px 8px; }
+  .back { border:0; background:none; font-size:30px; cursor:pointer; padding:8px 16px; color:#2f6ae0; }
+  .modal { position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal .box { background:#fff; border-radius:22px; padding:24px; max-width:380px; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,.25); } .modal p { font-size:20px; font-weight:600; margin:0 0 6px; }
   .track { flex:1; position:relative; height:40px; display:flex; align-items:center; margin:0 8px; }
   .rail { position:absolute; left:0; right:0; height:14px; background:#e5e7eb; border-radius:99px; overflow:hidden; }
   .rail i { display:block; height:100%; background:var(--accent); width:0; transition:width .8s ease; opacity:.55; }
@@ -501,6 +503,14 @@ function tone(p){   // piano-ish tone for white-key pitch p (0 = C3, 7 = middle 
 const PETS = ['🐶','🐱','🐰','🐻','🦊','🐼','🐯','🐹','🐨','🐸'];
 const BONUS = {3:'🥉',7:'🥈',14:'🥇',30:'💎'};   // streak-day badges
 
+/* in-page dialog (confirm()/alert() are silently blocked in some iPad viewers, which made buttons look dead) */
+function dialog(msg, buttons){
+  const ov = document.createElement('div'); ov.className = 'modal';
+  ov.innerHTML = `<div class="box"><p>${msg}</p><div class="row">${buttons.map((b,i)=>`<button class="btn ${b.ghost?'ghost':''}" data-i="${i}">${b.label}</button>`).join('')}</div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('button').forEach(el=>el.onclick=()=>{ ov.remove(); const f = buttons[+el.dataset.i].fn; if(f) f(); });
+}
+
 /* ============ app ============ */
 const app = $('#app');
 let S = null, SP = null;
@@ -588,7 +598,7 @@ function home(){
   app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
     const n = b.dataset.n, a = b.dataset.act;
     if(a==='book') book(n); else if(a==='shop') shop(n); else if(a==='sprint') sprint(n);
-    else if(a==='boss'){ if(weekend) startBoss(n); else alert('The boss only shows up on Saturday and Sunday! 週末才會出現喔 🐉'); }
+    else if(a==='boss'){ if(weekend) startBoss(n); else dialog('The boss only shows up on Saturday and Sunday! 🐉<br>週末才會出現喔', [{label:'OK'}]); }
   });
   if($('#claim')) $('#claim').onclick = () => { const d = load(); d._team = d._team || {}; d._team[weekKey()] = true; save(d); Object.keys(KIDS).forEach(n=>addCoins(n,50)); burst(40); home(); };
 }
@@ -662,7 +672,7 @@ function show(){
     const to = S.i/S.queue.length*100;   // let the pet run to its new spot
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ const pet = $('#pet'); if(pet){ pet.style.left = to+'%'; $('#trail').style.width = to+'%'; } })); S.pct = to;
   }
-  $('#back').onclick = () => { if(confirm('Leave this practice? Progress will be lost.')) home(); };
+  $('#back').onclick = () => dialog('Leave this practice? Progress will be lost.<br>要離開嗎？這次的進度不會保存', [{label:'Keep going 繼續'},{label:'Leave 離開', ghost:true, fn:home}]);
   let hl = 0; $('#hintBtn').onclick = () => {
     if(q.chart){ const h = $('#hint'); if(h.dataset.open){ h.innerHTML=''; h.dataset.open=''; } else { h.innerHTML = chartHTML(q.chart); h.dataset.open='1'; } return; } const h = [].concat(q.hint || ''); $('#hint').textContent = h[Math.min(hl++, h.length-1)]; };
   $('#next').onclick = next;
