@@ -68,7 +68,7 @@
   .choices button.sel { background:#eef4ff; box-shadow:0 0 0 4px var(--accent) inset; }
   .choices.staffs { grid-template-columns:repeat(3,1fr); } .choices.staffs button { padding:4px; } .choices.staffs svg { width:100%; display:block; }
   .kid.piano { filter:brightness(.92) saturate(1.1); }
-  .kb svg { width:100%; max-width:820px; display:block; margin:0 auto; }
+  .card .kb svg, .card .art.kb svg { width:100%; height:auto; max-width:820px; display:block; margin:0 auto; }   /* beats the .art svg size rules, incl. the short-screen media query */
   .quiz.one { grid-template-columns:1fr !important; } .kb { text-align:center; }
   .art.staff svg { width:300px; max-width:100%; height:auto; }
   .key { fill:#fff; stroke:#374151; stroke-width:1.5; cursor:pointer; } .key.hi { fill:#ffd166; } .key.sel { fill:#bcd4ff; }
