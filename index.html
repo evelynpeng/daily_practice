@@ -511,10 +511,11 @@ function dialog(msg, buttons){
   ov.innerHTML = `<div class="box"><p>${msg}</p><div class="row">${buttons.map((b,i)=>`<button class="btn ${b.ghost?'ghost':''}" data-i="${i}">${b.label}</button>`).join('')}</div></div>`;
   document.body.appendChild(ov);
   ov.querySelectorAll('button').forEach(el=>el.onclick=()=>{ ov.remove(); const f = buttons[+el.dataset.i].fn; if(f) f(); });
+  return ov;
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v7 · 2026-10-30';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v8 · 2026-11-02';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
@@ -577,6 +578,21 @@ function adaptFor(sk){
   return { weak:pl.weak, acc:t=>pl.acc[t]===undefined ? null : pl.acc[t] };
 }
 
+async function forceUpdate(){
+  const ov = dialog('Checking for a new version… 檢查更新中', []);
+  try {
+    const r = await fetch(location.pathname + '?_=' + Date.now(), { cache:'no-store' }), t = await r.text();
+    const m = t.match(/APP_VERSION = '([^']+)'/);
+    if(!r.ok || !m) throw new Error('unreachable');
+    if(m[1]===APP_VERSION){ ov.remove(); return dialog(`You already have the latest version ✅<br>已經是最新版<br><small>${APP_VERSION}</small>`, [{label:'OK'}]); }
+    if('serviceWorker' in navigator) await Promise.all((await navigator.serviceWorker.getRegistrations()).map(x=>x.unregister()));
+    if(window.caches) await Promise.all((await caches.keys()).map(k=>caches.delete(k)));
+    location.reload();     // progress is kept: it lives in localStorage, not in this cache
+  } catch(e) {
+    ov.remove(); dialog("Couldn't reach the server, so I kept the current version.<br>連不上網路，先繼續用目前的版本", [{label:'OK'}]);
+  }
+}
+
 /* ---- backup / sync between iPads (copy a code from one, paste it into the other) ---- */
 function exportCode(){ const d = load(); delete d._plan; return 'DP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(d)))); }
 function parseCode(t){ t = t.replace(/\s+/g,''); if(!t.startsWith('DP1:')) throw new Error('bad'); return JSON.parse(decodeURIComponent(escape(atob(t.slice(4))))); }
@@ -607,15 +623,22 @@ function sync(msg=''){
       <textarea id="out" readonly rows="4">${code}</textarea>
       <div class="row"><button class="btn" id="copy">📋 Copy 複製</button><button class="btn ghost" id="share">📤 Share 分享</button></div></div>
     <div class="card"><b>2️⃣ Bring in the other iPad's progress 匯入</b>
+      <div class="sub" style="margin:6px 0 0;text-align:left">On this iPad: long-press the code in your message → Copy, then tap Paste. 先在訊息裡長按代碼選「拷貝」，再按下面的貼上。</div>
       <textarea id="inp" rows="4" placeholder="Paste the code here 貼上代碼"></textarea>
-      <div class="row"><button class="btn" id="merge">➕ Merge 合併</button></div>
+      <div id="pmsg" class="sub" style="margin:4px 0"></div>
+      <div class="row"><button class="btn ghost" id="paste">📥 Paste 貼上</button><button class="btn" id="merge">➕ Merge 合併</button></div>
       <div class="sub" style="margin:8px 0 0">Merging only adds things — nothing on this iPad is deleted.<br>合併只會增加，不會刪掉這台的任何資料。</div></div>
     <div class="row"><button class="btn ghost" id="home">Home</button></div></div>`;
   $('#home').onclick = home;
   $('#copy').onclick = () => { const t = $('#out'); t.select(); t.setSelectionRange(0, 1e9);
     (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).catch(()=>{ try{ document.execCommand('copy'); }catch(e){} }).then(()=>{ $('#copy').textContent = '✅ Copied 已複製'; }); };
   if(navigator.share) $('#share').onclick = () => navigator.share({ text: code }).catch(()=>{}); else $('#share').classList.add('hidden');
+  $('#paste').onclick = async () => {
+    try { const t = await navigator.clipboard.readText(); $('#inp').value = t; $('#pmsg').textContent = t ? `✅ Pasted ${t.length} characters 已貼上` : '⚠️ The clipboard is empty — copy the code first 剪貼簿是空的，請先複製代碼'; }
+    catch(e) { $('#pmsg').textContent = '⚠️ Tap the box below, hold, and choose Paste 請點下面的框，長按選「貼上」'; }
+  };
   $('#merge').onclick = () => {
+    if(!$('#inp').value.trim()) return ($('#pmsg').textContent = '⚠️ Nothing pasted yet 還沒有貼上代碼');
     let inc; try { inc = parseCode($('#inp').value); } catch(e) { return sync("That doesn't look like a code. 看不懂這段文字，請整段重新複製"); }
     const { out, added } = mergeInto(load(), inc); save(out);
     sync(`✅ Merged! 合併完成 · ${added} new item${added===1?'':'s'} 新增`);
@@ -641,8 +664,9 @@ function home(){
         <button class="btn ghost" data-act="book" data-n="${n}">📒 Stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>
         <button class="btn ghost" data-act="shop" data-n="${n}">🛒 Shop · 🪙 ${coinsOf(n)}</button></div>`;
   }
-  app.innerHTML = h + `<div class="row"><button class="btn ghost" id="syncb" style="font-size:16px">🔄 Backup / Sync 同步與備份</button></div><div class="ver">Version ${APP_VERSION}</div></div>`;
+  app.innerHTML = h + `<div class="row"><button class="btn ghost" id="syncb" style="font-size:16px">🔄 Backup / Sync 同步與備份</button><button class="btn ghost" id="updb" style="font-size:16px">🔃 Check for update 檢查更新</button></div><div class="ver">Version ${APP_VERSION}</div></div>`;
   $('#syncb').onclick = () => sync();
+  $('#updb').onclick = forceUpdate;
   app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
   app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
     const n = b.dataset.n, a = b.dataset.act;
