@@ -515,7 +515,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v9 · 2026-11-02';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v10 · 2026-11-02';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
@@ -642,8 +642,11 @@ function sync(msg=''){
   $('#merge').onclick = () => {
     if(!$('#inp').value.trim()) return ($('#pmsg').textContent = '⚠️ Nothing pasted yet 還沒有貼上代碼');
     let inc; try { inc = parseCode($('#inp').value); } catch(e) { return sync("That doesn't look like a code. 看不懂這段文字，請整段重新複製"); }
-    const { out, added } = mergeInto(load(), inc); save(out);
-    sync(`✅ Merged! 合併完成 · ${added} new item${added===1?'':'s'} 新增`);
+    const before = load(), { out, added } = mergeInto(before, inc); save(out);
+    const days = Object.entries(inc).filter(([k])=>k[0]!=='_').map(([k,v])=>`${k}: ${Object.keys(v).length} day(s)`).join(' · ') || 'none';
+    const stk = Object.entries(inc._stickers||{}).map(([k,v])=>`${k} ${v.length}`).join(' · ') || 'none';
+    const now = Object.entries(out._stickers||{}).map(([k,v])=>`${k} ${v.length}`).join(' · ') || 'none';
+    sync(`✅ Merged! 合併完成 · ${added} new item${added===1?'':'s'} 新增<br><small style="font-weight:500">The code had 代碼裡有 → days: ${days}<br>stickers: ${stk}<br>This iPad now has 這台現在有 → stickers: ${now}</small>`);
   };
 }
 
