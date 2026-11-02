@@ -515,7 +515,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v8 · 2026-11-02';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v9 · 2026-11-02';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
@@ -594,8 +594,10 @@ async function forceUpdate(){
 }
 
 /* ---- backup / sync between iPads (copy a code from one, paste it into the other) ---- */
-function exportCode(){ const d = load(); delete d._plan; return 'DP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(d)))); }
-function parseCode(t){ t = t.replace(/\s+/g,''); if(!t.startsWith('DP1:')) throw new Error('bad'); return JSON.parse(decodeURIComponent(escape(atob(t.slice(4))))); }
+function exportCode(){ const d = load(); delete d._plan; return 'DP1_' + btoa(unescape(encodeURIComponent(JSON.stringify(d)))); }   // not 'DP1:' -- Messages treats that as a link/URL scheme
+function parseCode(t){   // accepts DP1_… and the older DP1:…, even if the chat app wrapped or decorated the text
+  const m = t.replace(/\s+/g,'').match(/DP1[:_]([A-Za-z0-9+\/=]+)/); if(!m) throw new Error('bad');
+  return JSON.parse(decodeURIComponent(escape(atob(m[1])))); }
 function mergeInto(local, inc){   // never loses anything: unions, max, or "best of both"
   const out = JSON.parse(JSON.stringify(local)); let added = 0;
   for(const [k,v] of Object.entries(inc)){
