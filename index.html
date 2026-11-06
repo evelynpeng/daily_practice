@@ -523,9 +523,10 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v12 · 2026-11-06';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v13 · 2026-11-06';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
+const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
 const starsOf = pct => pct>=.9?3:pct>=.7?2:pct>=.4?1:0;
 
 /* ---- coins, shop, themes ---- */
@@ -831,7 +832,7 @@ function show(){
   const wide = piano || !!q.keys || q.html.includes('class="kb"') || q.html.includes('art kb');
   const pens = shopOf(S.name).owned.filter(x=>x.startsWith('pen:')).map(x=>SHOP.pen.find(p=>'pen:'+p.id===x)).filter(Boolean);
   app.innerHTML = `
-    <div class="top"><button class="back" id="back">←</button>${head}<div class="count">${S.extra?'':`🪙 ${S.coins} · `}${S.i+1}/${S.queue.length}</div></div>
+    <div class="top"><button class="back" id="back">←</button>${head}<div class="count">${S.extra?'':`🪙 ${Math.round(S.coins)} · `}${S.i+1}/${S.queue.length}</div></div>
     <div class="quiz ${S.padOpen&&!piano?'':'nopad'} ${wide?'one':''}" id="quiz">
       <div class="card">
         <span class="tag">${boss?'🐉 Boss · ':''}${q.topic}</span>
@@ -954,7 +955,7 @@ function submit(val, btn){
     return;
   }
   S.answered = true;
-  if(!S.extra) S.coins += firstTry ? 2 : 1;
+  if(!S.extra) S.coins += (firstTry ? 1 : .5) * SESSION_COINS / S.total;   // every practice is worth the same, whether it has 10, 12 or 30 questions
   if(q.choices) app.querySelectorAll('[data-c]').forEach(b=>{ if(b.dataset.c===q.answer) b.classList.add('ok'); b.classList.remove('sel'); b.disabled=true; });
   else $('#ans').classList.add('ok');
   burst();
@@ -989,7 +990,7 @@ function finish(){
     }
     save(d);
     if(firstToday){
-      earned = S.coins + 10 + (stars===3?10:0);   // per answer + finishing bonus
+      earned = Math.round(S.coins) + 10 + (stars===3?10:0);   // per answer + finishing bonus
       addCoins(S.name, earned);
       const b = BONUS[streak(S.sk)];               // streak milestone badge
       if(b){ const d2 = load(); d2._stickers = d2._stickers || {}; const m = d2._stickers[S.name] = d2._stickers[S.name] || []; if(!m.includes(b)){ m.push(b); won.push(b); save(d2); } }

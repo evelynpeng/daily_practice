@@ -1,7 +1,7 @@
 // Offline cache. Online: always ask the server for the newest files (so a push shows up on the next open).
 // Offline / server unreachable (e.g. GitHub blocked): fall back to the saved copy after 2.5 s, so the app always opens.
 // Bump CACHE on every release (keep it in step with APP_VERSION in index.html).
-const CACHE = 'daily-practice-v12';
+const CACHE = 'daily-practice-v13';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
