@@ -523,7 +523,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v13 · 2026-11-06';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v14 · 2026-11-06';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
@@ -769,7 +769,7 @@ function home(){
       <div>⭐ ${ts} / ${TEAM_GOAL} ${ts>=TEAM_GOAL ? (claimed?' · 🎉 Reward claimed! 領過了':'<br><button class="btn" id="claim" style="margin-top:8px">🎁 Claim +50 🪙 for each</button>') : ` · ${TEAM_GOAL-ts} more ⭐ and you both win a bonus!`}</div></div>`;
   for(const [n,k] of Object.entries(KIDS)){
     const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
-      return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small><span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span></button>`; };
+      return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small>${subject==='math'?`<span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span>`:''}</button>`; };
     const best = ((data._sprint||{})[n]||{}).best, cleared = ((data._boss||{})[n]||{})[bossKey()];
     h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') +
       `<div class="books">
