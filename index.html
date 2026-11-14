@@ -104,6 +104,11 @@
   .mlegend { display:flex; gap:8px; justify-content:center; margin-top:12px; } .mlegend .mc { aspect-ratio:auto; padding:6px 12px; font-size:14px; }
   .legend-new { background:linear-gradient(135deg,#fff3b0,#ffd1a1); border-radius:16px; padding:12px; margin:10px 0; text-align:center; font-weight:800; } .legend-new span { display:inline-block; margin-top:4px; font-size:18px; }
   .legs { display:grid; gap:8px; } .leg { display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px; padding:8px 12px; opacity:.55; } .leg.on { opacity:1; box-shadow:0 0 0 2px #fcd34d inset; } .leg .e { font-size:34px; width:44px; text-align:center; } .leg small { color:#6b7280; }
+  .lvl { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:14px; font-weight:800; cursor:pointer; } .xpbar { flex:0 0 100px; height:10px; background:rgba(255,255,255,.35); border-radius:99px; overflow:hidden; } .xpbar i { display:block; height:100%; background:#fff; }
+  .jrow { display:flex; gap:6px; margin:12px 0; } .jrow.rev { flex-direction:row-reverse; } .node { flex:1; text-align:center; } .node small { display:block; font-size:12px; color:#6b7280; font-weight:700; }
+  .node .dot { width:60px; height:60px; border-radius:50%; margin:0 auto 4px; display:flex; align-items:center; justify-content:center; font-size:30px; background:#fde68a; box-shadow:0 0 0 3px #fbbf24 inset; overflow:hidden; }
+  .node.lock .dot { background:#e5e7eb; box-shadow:0 0 0 3px #d1d5db inset; opacity:.7; } .node.now .dot { width:74px; height:74px; background:#fff; box-shadow:0 0 0 4px var(--accent); animation:bounce .8s ease infinite alternate; } .node.now .dot svg { width:100%; height:100%; }
+  .victory .av-big svg { width:150px; height:180px; }
   .ver { text-align:center; color:#9ca3af; font-size:13px; margin:18px 0 6px; }
   /* shop, team, themes, boss */
   .books { flex-wrap:wrap; gap:8px; margin-bottom:12px; } .books .btn { flex:1 1 30%; font-size:15px; padding:10px 4px; }
@@ -571,7 +576,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v16 · 2026-11-13';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v17 · 2026-11-13';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
@@ -678,7 +683,7 @@ function opsSVG(ops){
     return `<text x="${o.x}" y="${o.y}" font-size="${o.size}" text-anchor="middle">${o.s}</text>`;
   }).join('');
 }
-const avatarSVG = n => `<svg class="avatar" viewBox="0 0 200 240">${opsSVG(avatarOps(n))}</svg>`;
+const avatarSVG = (n, vb='0 0 200 240') => `<svg class="avatar" viewBox="${vb}">${opsSVG(avatarOps(n))}</svg>`;
 
 
 function toggleWear(name, slot, id, price){
@@ -794,6 +799,46 @@ function checkAch(name){
 }
 const achHTML = fresh => fresh.length ? `<div class="legend-new">🏆 Legendary! 傳奇貼紙<br>${fresh.map(a=>`<span>${a.e} ${a.zh}</span>`).join('<br>')}</div>` : '';
 
+/* ---- levels & stages: XP from practice, a level-up "STAGE CLEAR!", and a journey map ---- */
+const STAGES = ['🌱|Seedling 小種子','🐣|Hatchling 小雞','🐾|Explorer 探險家','🚲|Rider 小車手','🧭|Navigator 領航員','🛶|Sailor 水手','🏕️|Camper 露營者','⛰️|Climber 登山者','🚀|Rocketeer 火箭手','🛰️|Astronaut 太空人','🪐|Planet Hopper 行星探索','🌟|Star Captain 星星艦長','🧙|Wizard 魔法師','🐉|Dragon Tamer 馴龍師','👑|Champion 冠軍'].map(x=>{ const [e,n]=x.split('|'); return {e,n}; });
+const needFor = lv => 60 + 30*(lv-1);                         // XP from level lv to lv+1
+const cumXP = lv => { let t=0; for(let i=1;i<lv;i++) t += needFor(i); return t; };
+function levelOf(xp){ let lv = 1; while(xp >= cumXP(lv+1)) lv++; const into = xp-cumXP(lv), need = needFor(lv); return { lv, into, need, pct:Math.round(into/need*100) }; }
+const stageOf = lv => STAGES[Math.min(lv,STAGES.length)-1];
+const xpOf = n => (load()._xp||{})[n] || 0;
+function ensureXP(n){   // first time: credit the practices already done, so nobody starts from zero
+  const d = load(); d._xp = d._xp||{}; if(d._xp[n]!==undefined) return;
+  let t = 0; for(const sk of [n,n+':piano']) for(const [,r] of Object.entries(d[sk]||{})){ t += 20 + 10*starsOf(r.score/r.total) + (r.score===r.total?10:0); }
+  d._xp[n] = t; save(d);
+}
+function addXP(n, gain){
+  ensureXP(n); const d = load(), before = levelOf(d._xp[n]).lv; d._xp[n] += gain; const after = levelOf(d._xp[n]).lv;
+  let coins = 0; for(let l=before+1; l<=after; l++) coins += 20 + 5*l;
+  save(d); if(coins) addCoins(n, coins);
+  return { before, after, coins, gain };
+}
+const xpLine = r => r ? `✨ +${r.gain} XP · Lv ${levelOf(xpOf(r.name)).lv}` : '';
+function stageClear(n, r){
+  if(!r || r.after<=r.before) return;
+  const st = stageOf(r.after), ov = document.createElement('div'); ov.className = 'victory';
+  ov.innerHTML = `<div class="av-big">${avatarSVG(n)}</div><h2>STAGE CLEAR! 過關！</h2><div class="boom">${st.e}</div><div class="champ">Lv ${r.after} · ${st.n}</div><div class="loot">🪙 +${r.coins}</div><button class="btn" id="scl" style="margin-top:16px">Continue →</button>`;
+  document.body.appendChild(ov); rain(3500); burst(40); $('#scl').onclick = () => ov.remove();
+}
+function journey(name){
+  document.body.className = KIDS[name].cls; applyTheme(name); S = null; ensureXP(name);
+  const xp = xpOf(name), L = levelOf(xp), total = Math.max(15, L.lv+3), st = stageOf(L.lv);
+  const node = lv => { const s2 = stageOf(lv), cls = lv<L.lv ? 'done' : lv===L.lv ? 'now' : 'lock';
+    return `<div class="node ${cls}"><div class="dot">${cls==='done'?s2.e:cls==='now'?avatarSVG(name,'40 14 120 120'):'🔒'}</div><small>Lv ${lv}</small><small>${cls==='lock'?'?':s2.n.split(' ')[1]||s2.n}</small></div>`; };
+  const rows = []; for(let i=0;i<total;i+=5) rows.push(Array.from({length:Math.min(5,total-i)},(_,j)=>i+j+1));
+  app.innerHTML = `<div class="mid"><h1>🚩 ${name}'s Journey</h1>
+    <div class="sub">Lv ${L.lv} · ${st.e} ${st.n}<br>✨ ${L.into} / ${L.need} XP to Lv ${L.lv+1}</div>
+    <div class="prog"><i style="width:${L.pct}%"></i></div>
+    <div class="card">${rows.map((r,i)=>`<div class="jrow ${i%2?'rev':''}">${r.map(node).join('')}</div>`).join('')}</div>
+    <div class="card"><b>How to earn XP 怎麼拿經驗值</b><br>📘 Each practice 每次練習：20 XP + 10 per ⭐ (+10 if perfect 全對)<br>⏱️ 60-second sprint 挑戰：1 XP per answer 每答對一題 (max 25)<br>🐉 Weekend boss 週末 Boss：60 XP<br>🪙 Every new level 每升一級：bonus coins 金幣獎勵</div>
+    <div class="row"><button class="btn" id="home">Home</button></div></div>`;
+  $('#home').onclick = home;
+}
+
 /* ---- team goal (both kids, whole week) ---- */
 const TEAM_GOAL = 36;     // stars per week, all four daily practices added up
 const weekStart = () => { const d = new Date(); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; };
@@ -850,6 +895,7 @@ function mergeInto(local, inc){   // never loses anything: unions, max, or "best
     else if(k==='_shop'){ out._shop = out._shop||{}; for(const [n,x] of Object.entries(v)){ const m = out._shop[n] = out._shop[n]||{owned:[],equip:{}}; (x.owned||[]).forEach(o=>{ if(!m.owned.includes(o)) m.owned.push(o); }); m.equip = Object.assign({}, x.equip||{}, m.equip||{}); } }
     else if(k==='_avatar'){ out._avatar = out._avatar||{}; for(const [n,x] of Object.entries(v)) out._avatar[n] = Object.assign({}, x, out._avatar[n]||{}); }
     else if(k==='_mastery'){ out._mastery = out._mastery||{}; for(const [sk,mm] of Object.entries(v)){ const m = out._mastery[sk] = out._mastery[sk]||{}; for(const [f,n] of Object.entries(mm)) m[f] = Math.max(m[f]||0, n); } }
+    else if(k==='_xp'){ out._xp = out._xp||{}; for(const [n,x] of Object.entries(v)) out._xp[n] = Math.max(out._xp[n]||0, x); }
     else if(k==='_level'){ out._level = out._level||{}; for(const [n,l] of Object.entries(v)) out._level[n] = Math.max(out._level[n]||1, l); }
     else if(k==='_ach'){ out._ach = out._ach||{}; for(const [n,arr] of Object.entries(v)){ const m = out._ach[n] = out._ach[n]||[]; arr.forEach(x=>{ if(!m.includes(x)){ m.push(x); added++; } }); } }
     else if(k==='_team'){ out._team = Object.assign({}, v, out._team||{}); }
@@ -907,8 +953,9 @@ function home(){
       <div class="sub" style="margin:0 0 6px">⏱️ This week's best sprint 本週最佳：${KIDNAMES.map(n=>{ const w = ((data._sprint||{})[n]||{}).wk, b = w && w.key===weekKey() ? w.best : 0; return `${n} ${b||'–'}${b&&tierOf(n,b)>=0?' '+TIER_ICONS[tierOf(n,b)]:''}`; }).join(' · ')}</div>
       <div>⭐ ${ts} / ${TEAM_GOAL} ${ts>=TEAM_GOAL ? (claimed?' · 🎉 Reward claimed! 領過了':'<br><button class="btn" id="claim" style="margin-top:8px">🎁 Claim +50 🪙 for each</button>') : ` · ${TEAM_GOAL-ts} more ⭐ and you both win a bonus!`}</div></div>`;
   for(const [n,k] of Object.entries(KIDS)){
+    ensureXP(n); const lv = levelOf(xpOf(n)), stg = stageOf(lv.lv);
     const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
-      return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small>${subject==='math'?`<span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span>`:''}</button>`; };
+      return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small>${subject==='math'?`<span class="lvl" data-n="${n}">Lv ${lv.lv} ${stg.e} ${stg.n.split(' ')[1]}<span class="xpbar"><i style="width:${lv.pct}%"></i></span></span><span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span>`:''}</button>`; };
     const best = ((data._sprint||{})[n]||{}).best, ti = best ? tierOf(n,best) : -1, cleared = ((data._boss||{})[n]||{})[bossKey()];
     h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') +
       `<div class="books">
@@ -923,6 +970,7 @@ function home(){
   $('#syncb').onclick = () => sync();
   $('#updb').onclick = forceUpdate;
   app.querySelectorAll('.kid').forEach(b=>b.onclick=()=>start(b.dataset.n, false, b.dataset.s));
+  app.querySelectorAll('.kid .lvl').forEach(el=>el.onclick=e=>{ e.stopPropagation(); journey(el.dataset.n); });
   app.querySelectorAll('.kid .av').forEach(el=>el.onclick=e=>{ e.stopPropagation(); avatar(el.dataset.n); });   // tap the little person = dress-up page, not practice
   app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
     const n = b.dataset.n, a = b.dataset.act;
@@ -1111,8 +1159,9 @@ function next(){ S.i++; show(); }
 
 function finish(){
   if(S.mode==='boss') return bossFinish();
+  ensureXP(S.name);
   const pct = S.first/S.total, stars = starsOf(pct);
-  let won = [], earned = 0, l2new = false, fresh = [];
+  let won = [], earned = 0, l2new = false, fresh = [], xpr = null;
   if(!S.extra){
     const d = load(), t = todayStr(); d[S.sk] = d[S.sk] || {};
     const firstToday = !d[S.sk][t];
@@ -1135,6 +1184,7 @@ function finish(){
     if(firstToday){
       earned = Math.round(S.coins) + 10 + (stars===3?10:0);   // per answer + finishing bonus
       addCoins(S.name, earned);
+      xpr = addXP(S.name, 20 + 10*stars + (S.first===S.total?10:0)); xpr.name = S.name;
       const b = BONUS[streak(S.sk)];               // streak milestone badge
       if(b){ const d2 = load(); d2._stickers = d2._stickers || {}; const m = d2._stickers[S.name] = d2._stickers[S.name] || []; if(!m.includes(b)){ m.push(b); won.push(b); save(d2); } }
       if(S.subject==='math' && maybeUnlockL2(S.name)) l2new = true;
@@ -1145,13 +1195,14 @@ function finish(){
   app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
     <div class="card"><div class="av-big">${avatarSVG(S.name)}</div><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
-    ${earned?`<div class="sub" style="color:var(--ink);font-weight:700;font-size:20px">🪙 +${earned} coins</div>`:''}
+    ${earned?`<div class="sub" style="color:var(--ink);font-weight:700;font-size:20px">🪙 +${earned} coins${xpr?` &nbsp;·&nbsp; ${xpLine(xpr)}`:''}</div>`:''}
     ${l2new?'<div class="legend-new">⬆️ Harder questions unlocked! 解鎖進階題<br><small>A few will be mixed into your daily practice 每天會混入幾題</small></div>':''}${achHTML(fresh)}
     ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
     <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
     <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="shopb">🛒 Shop</button><button class="btn ghost" id="home">Home</button></div>
     <div class="sub" style="margin-top:12px">🔥 ${streak(S.sk)}-day streak · 🤝 team ⭐ ${teamStars()}/${TEAM_GOAL}${S.extra?'<br>(extra practice earns no coins)':''}</div></div></div>`;
   if(stars>=2) burst(40);
+  stageClear(S.name, xpr);
   const name = S.name, subject = S.subject;
   $('#more').onclick = () => start(name, true, subject);
   $('#shopb').onclick = () => shop(name);
@@ -1173,7 +1224,7 @@ function bossFinish(){
     d._boss[name][key_] = true; coins = 30; badge = BOSS_BADGES[weekNo()%BOSS_BADGES.length];
     d._stickers = d._stickers || {}; const m = d._stickers[name] = d._stickers[name] || []; if(m.includes(badge)) badge = null; else m.push(badge);
   }
-  save(d); if(coins) addCoins(name, coins);
+  save(d); ensureXP(name); let xpr = null; if(coins){ addCoins(name, coins); xpr = addXP(name, 60); xpr.name = name; }
   const fresh = checkAch(name);
   const ov = document.createElement('div'); ov.className = 'victory';
   ov.innerHTML = `<div class="trophy">🏆</div><h2>BOSS DEFEATED!</h2><div class="boom">${monster} 💥</div>
@@ -1181,7 +1232,7 @@ function bossFinish(){
     ${coins?`<div class="loot">🪙 +${coins}${badge?` &nbsp; new badge ${badge}`:''}</div>`:'<div class="loot">(already collected this weekend 這個週末領過囉)</div>'}${achHTML(fresh)}
     <button class="btn" id="vclose" style="margin-top:18px">Continue →</button>`;
   document.body.appendChild(ov); rain(); burst(60);
-  $('#vclose').onclick = () => { ov.remove(); home(); };
+  $('#vclose').onclick = () => { ov.remove(); home(); stageClear(name, xpr); };
 }
 
 /* ---- 60-second sprint ---- */
@@ -1233,13 +1284,14 @@ function sprintEnd(){
   if(record) r.best = sp.score;
   if(!r.wk || r.wk.key!==weekKey()) r.wk = { key:weekKey(), best:0 }; if(sp.score>r.wk.best) r.wk.best = sp.score;
   let coins = 0; if(r.coinedOn!==t){ coins = Math.min(sp.score,20); r.coinedOn = t; }
-  save(d); if(coins) addCoins(sp.name, coins);
+  save(d); ensureXP(sp.name); let xpr = null; if(coins){ addCoins(sp.name, coins); xpr = addXP(sp.name, Math.min(sp.score,25)); xpr.name = sp.name; }
   const fresh = checkAch(sp.name), ti = tierOf(sp.name,sp.score), nxt = TIERS[sp.name][ti+1];
   app.innerHTML = `<div class="narrow"><h1>⏱️ Time's up!</h1><div class="card"><div class="score">${sp.score}</div><div class="sub">correct in 60 seconds</div>
-    <div class="sub" style="color:var(--ink);font-weight:700">${record?(prev?`🎉 New record! (old record ${prev})`:'🎉 First record!'):`Your record: ${r.best}`}${coins?` · 🪙 +${coins}`:''}</div>
+    <div class="sub" style="color:var(--ink);font-weight:700">${record?(prev?`🎉 New record! (old record ${prev})`:'🎉 First record!'):`Your record: ${r.best}`}${coins?` · 🪙 +${coins}`:''}${xpr?` · ${xpLine(xpr)}`:''}</div>
     <div class="sub" style="color:var(--ink);font-weight:700">${ti>=0?`${TIER_ICONS[ti]} ${TIER_NAMES[ti]}!`:''} ${nxt?`Next: ${TIER_ICONS[ti+1]} at ${nxt}`:'Top tier! 💎'}</div>${achHTML(fresh)}
     <div class="row"><button class="btn" id="again">Try again 🔁</button><button class="btn ghost" id="home">Home</button></div></div></div>`;
   if(record) { burst(50); rain(2500); }
+  stageClear(sp.name, xpr);
   $('#again').onclick = () => sprint(sp.name); $('#home').onclick = home;
 }
 
