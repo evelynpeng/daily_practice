@@ -97,6 +97,13 @@
   .avrow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
   .swatch { width:36px; height:36px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 2px #d1d5db; cursor:pointer; padding:0; } .swatch.on { box-shadow:0 0 0 3px var(--ink); }
   .btn.sm { font-size:15px; padding:8px 12px; } .btn.sm.on { background:var(--accent); color:#fff; }
+  .kid.l2 { background:linear-gradient(135deg,#6d4bd8,#4f8cff); } .kid.locked { background:#cbd5e1; color:#475569; cursor:default; padding-right:22px; }
+  .mgrid { display:grid; gap:5px; } .mh { display:flex; align-items:center; justify-content:center; font-weight:800; color:#6b7280; font-size:14px; }
+  .mc { position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:10px; font-weight:800; font-size:18px; } .mc i { position:absolute; top:1px; right:4px; font-size:11px; font-style:normal; }
+  .mc.l0 { background:#e5e7eb; color:#9ca3af; } .mc.l1 { background:#fef3c7; color:#92400e; } .mc.l2 { background:#fde68a; color:#92400e; } .mc.l3 { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#7c2d12; box-shadow:0 0 0 2px #fcd34d inset; }
+  .mlegend { display:flex; gap:8px; justify-content:center; margin-top:12px; } .mlegend .mc { aspect-ratio:auto; padding:6px 12px; font-size:14px; }
+  .legend-new { background:linear-gradient(135deg,#fff3b0,#ffd1a1); border-radius:16px; padding:12px; margin:10px 0; text-align:center; font-weight:800; } .legend-new span { display:inline-block; margin-top:4px; font-size:18px; }
+  .legs { display:grid; gap:8px; } .leg { display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px; padding:8px 12px; opacity:.55; } .leg.on { opacity:1; box-shadow:0 0 0 2px #fcd34d inset; } .leg .e { font-size:34px; width:44px; text-align:center; } .leg small { color:#6b7280; }
   .ver { text-align:center; color:#9ca3af; font-size:13px; margin:18px 0 6px; }
   /* shop, team, themes, boss */
   .books { flex-wrap:wrap; } .books .btn { flex:1 1 45%; }
@@ -333,10 +340,43 @@ function qLength(){
   return numQ('Measurement',`A pencil is ${a} cm long. A crayon is ${b} cm long.<br>If you line them up end to end, how long are they together?`, '', a+b, 'Together means put them together.');
 }
 
+/* ============ Level 2 (unlocked at 90%+ average): near grade-3, still one short daily session ============ */
+const fmtT = (h,m) => `${h}:${pad2(m)}`;
+function qDiv(){ const b=ri(2,9), c=ri(2,9); return { topic:'L2 · Division', html:`<div class="big">${b*c} ÷ ${b} = ?</div>`, answer:String(c), fact:`d:${b*c}/${b}`, hint:[`What number times ${b} makes ${b*c}?`,'Division is multiplication backwards.'] }; }
+function qWord(){
+  const t = ri(0,2), thing = pick(['pencils','apples','stickers','toy cars']), box = pick(['boxes','bags','baskets']);
+  if(t===0){ const g=ri(3,9), n=ri(3,9); return numQ('L2 · Word problems',`There are ${g} ${box} with ${n} ${thing} in each.<br>How many ${thing} in all?`,'',g*n,['Are the groups equal? Which operation fits?']); }
+  if(t===1){ const g=ri(3,8), n=ri(3,9); return numQ('L2 · Word problems',`${g*n} ${thing} are shared equally among ${g} friends.<br>How many does each friend get?`,'',n,['Sharing equally means making equal groups.']); }
+  const a=ri(35,60), b=ri(10,25), c=ri(5,20); return numQ('L2 · Word problems',`Mia had ${a} stickers. She gave away ${b}, then got ${c} more.<br>How many does she have now?`,'',a-b+c,['Do it in two steps, one at a time.']);
+}
+function qArea(){
+  if(rnd()<.6){ const r=ri(3,6), c=ri(3,7); return numQ('L2 · Area & perimeter','Each small square is 1 square unit.<br>What is the <b>area</b>?', gridSVG(r,c), r*c, ['Count one row, then think about how many rows.']); }
+  const w=ri(2,6), h=ri(4,9); return numQ('L2 · Area & perimeter',`A rectangle is ${h} units long and ${w} units wide.<br>What is its <b>perimeter</b>?`, rectLabelSVG(h,w), 2*(h+w), ['Perimeter is all the way around: how many sides, how long is each?']);
+}
+function qFracCmp(){
+  const [a,b] = shuffle([2,3,4,6,8]).slice(0,2), big = Math.min(a,b);
+  return choice('L2 · Fractions',`Which fraction is <b>bigger</b>?`, `<div class="big" style="font-size:40px">1/${a} &nbsp; or &nbsp; 1/${b}</div>`, `1/${big}`, [`1/${a}`,`1/${b}`], ['Cut a pizza into more pieces: are the pieces bigger or smaller?'], 2);
+}
+function qTimes10(){ const a=ri(2,9), t=ri(2,9); return { topic:'L2 · Number sense', html:`<div class="big">${a} × ${t*10} = ?</div>`, answer:String(a*t*10), hint:[`Try ${a} × ${t} first.`,'Then think about the tens.'] }; }
+function qThree(){
+  if(rnd()<.5){ const a=ri(120,480), b=ri(120,480); return { topic:'L2 · Number sense', html:`<div class="big">${a} + ${b} = ?</div>`, answer:String(a+b), hint:['Add the ones, then the tens, then the hundreds.','Regroup when a place gets to 10.'] }; }
+  const m=ri(400,900), sb=ri(120,m-150); return { topic:'L2 · Number sense', html:`<div class="big">${m} − ${sb} = ?</div>`, answer:String(m-sb), hint:['Subtract the ones, tens, hundreds in turn.','Trade 1 ten for 10 ones if you need to.'] };
+}
+function qRound(){
+  if(rnd()<.5){ let n; do{ n=ri(11,98); }while(n%10===5); return numQ('L2 · Number sense',`Round <b>${n}</b> to the nearest 10.`,'',Math.round(n/10)*10,['Look at the ones digit: 5 or more goes up.']); }
+  let n; do{ n=ri(101,949); }while(n%100===50); return numQ('L2 · Number sense',`Round <b>${n}</b> to the nearest 100.`,'',Math.round(n/100)*100,['Look at the tens digit: 5 or more goes up.']);
+}
+function qElapsed(){
+  const h=ri(8,11), m=ri(0,10)*5, dur=ri(3,11)*5, tot=h*60+m+dur;
+  return numQ('L2 · Time',`The lesson starts at ${fmtT(h,m)} and ends at ${fmtT(Math.floor(tot/60),tot%60)}.<br>How many minutes long is it?`,'',dur,['Count on from the start time to the end time.']);
+}
+
 /* ============ kid profiles ============ */
 // ADAPT = yesterday-style memory: facts to bring back + recent accuracy per topic (set in start())
-let ADAPT = { weak:[], acc:()=>null };
-const NOADAPT = { weak:[], acc:()=>null };
+const MASTER_N = 3;                                  // first-try-correct answers needed to turn a multiplication fact gold
+const mkey = (a,b) => Math.min(a,b)+'x'+Math.max(a,b);
+let ADAPT = { weak:[], acc:()=>null, mastery:{} };
+const NOADAPT = { weak:[], acc:()=>null, mastery:{} };
 // shift ONE question from the strongest topic to the weakest one (never more -- the goal is a daily habit, not a hard test)
 function tilt(cnt, protect=[]){
   const sc = Object.keys(cnt).map(t=>[t,ADAPT.acc(t)]).filter(x=>x[1]!==null);
@@ -350,9 +390,11 @@ const KIDS = {
     build(){
       const seen = new Set(), mul = [];
       ADAPT.weak.filter(f=>f[0]==='m').slice(0,3).forEach(f=>{ const [a,b] = f.slice(2).split('x').map(Number); seen.add(Math.min(a,b)+'x'+Math.max(a,b)); mul.push(qMul(a,b,'Multiply 1–9')); });
-      while(mul.length<15){
+      for(let tries=0; mul.length<15; tries++){
         const a = rnd()<.6 ? ri(6,9) : ri(1,9), b = ri(1,9), k = Math.min(a,b)+'x'+Math.max(a,b);
-        if(seen.has(k)) continue; seen.add(k);
+        if(seen.has(k)) continue;
+        if(tries<60 && (ADAPT.mastery[k]||0)>=MASTER_N) continue;     // gold facts rest; the grey ones come up
+        seen.add(k);
         mul.push(mul.length%5===4 ? qMissing(a,b,'Multiply 1–9') : qMul(a,b,'Multiply 1–9'));
       }
       // teacher feedback: Number & Ops approaching, Geometry needs work, Algebra + Measurement at grade level
@@ -383,7 +425,20 @@ const KIDS = {
       });
       for(let i=0;i<cnt['Add 進位'];i++){ let a,b,k; do{ a=ri(2,9); b=ri(2,9); k=Math.min(a,b)+'+'+Math.max(a,b); }while(a+b<11||seenA.has(k)); seenA.add(k); out.push(qAdd(a,b)); }
       for(let i=0;i<cnt['Subtract 退位'];i++){ let m,sb,k; do{ m=ri(11,18); sb=ri(m%10+1,9); k=m+'-'+sb; }while(seenS.has(k)); seenS.add(k); out.push(qSub(m,sb)); }
-      for(const T of ['Multiply ×4','Multiply ×3','Multiply ×2']){ const t = +T.slice(-1); for(let i=0;i<cnt[T];i++){ let b,k; do{ b=ri(2,9); k=t+'x'+b; }while(seenM.has(k)); seenM.add(k); out.push(qMul(t,b,T)); } }
+      for(const T of ['Multiply ×4','Multiply ×3','Multiply ×2']){ const t = +T.slice(-1); for(let i=0;i<cnt[T];i++){ let b,k,g=0; do{ b=ri(2,9); k=t+'x'+b; g++; }while(seenM.has(k) || (g<25 && (ADAPT.mastery[mkey(t,b)]||0)>=MASTER_N)); seenM.add(k); out.push(qMul(t,b,T)); } }
+      return shuffle(out);
+    }
+  }
+};
+
+const LEVEL2 = {
+  Ethan: {
+    cls:'ethan', desc:'Level 2 · Division · Word problems · Area · Fractions · Time (20 questions)',
+    build(){
+      const out = [];
+      ADAPT.weak.filter(f=>f[0]==='d').slice(0,2).forEach(f=>{ const [a,b] = f.slice(2).split('/').map(Number); out.push({ topic:'L2 · Division', html:`<div class="big">${a} ÷ ${b} = ?</div>`, answer:String(a/b), fact:f, hint:[`What number times ${b} makes ${a}?`,'Division is multiplication backwards.'] }); });
+      const plan = [[qDiv,4-out.length],[qWord,4],[qArea,3],[qFracCmp,2],[qTimes10,2],[qThree,2],[qRound,2],[qElapsed,1]];
+      for(const [fn,n] of plan) out.push(...uniq(n, fn));
       return shuffle(out);
     }
   }
@@ -523,7 +578,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v14 · 2026-11-06';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v15 · 2026-11-13';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
@@ -635,9 +690,9 @@ const avatarSVG = n => `<svg class="avatar" viewBox="0 0 200 240">${opsSVG(avata
 
 function toggleWear(name, slot, id, price){
   const x = shopOf(name), c = coinsOf(name), own = x.owned.includes(slot+':'+id);
-  if(own){ if(x.equip[slot]===id) delete x.equip[slot]; else x.equip[slot] = id; setShop(name,x); return avatar(name); }
+  if(own){ if(x.equip[slot]===id) delete x.equip[slot]; else x.equip[slot] = id; setShop(name,x); return avatar(name, achHTML(checkAch(name))); }
   if(c < price) return avatar(name, `<div class="fb bad">Need ${price-c} more 🪙 — keep practicing! 再加油</div>`);
-  addCoins(name,-price); x.owned.push(slot+':'+id); x.equip[slot] = id; setShop(name,x); avatar(name); burst(20);
+  addCoins(name,-price); x.owned.push(slot+':'+id); x.equip[slot] = id; setShop(name,x); avatar(name, achHTML(checkAch(name))); burst(20);
 }
 function avatar(name, msg=''){
   document.body.className = KIDS[name].cls; applyTheme(name); S = null;
@@ -659,6 +714,93 @@ function avatar(name, msg=''){
   app.querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{ const [slot,id,price] = b.dataset.wear.split('|'); toggleWear(name,slot,id,+price); });
 }
 
+/* ---- multiplication mastery map ---- */
+const masteryOf = sk => (load()._mastery||{})[sk] || {};
+function masteryAdd(d, sk, log){
+  d._mastery = d._mastery||{}; const m = d._mastery[sk] = d._mastery[sk]||{};
+  log.forEach(e=>{ if(!e.fact || e.fact[0]!=='m') return; const [a,b] = e.fact.slice(2).split('x').map(Number), k = mkey(a,b); m[k] = Math.min(4, Math.max(0, (m[k]||0) + (e.ok?1:-1))); });
+}
+const mapDims = name => name==='Ethan' ? { rows:[1,2,3,4,5,6,7,8,9], cols:[1,2,3,4,5,6,7,8,9] } : { rows:[2,3,4], cols:[2,3,4,5,6,7,8,9] };
+function validFacts(name){ const {rows,cols} = mapDims(name), set = new Set(); rows.forEach(r=>cols.forEach(c=>set.add(mkey(r,c)))); return [...set]; }
+const goldCount = name => { const m = masteryOf(name); return validFacts(name).filter(k=>(m[k]||0)>=MASTER_N).length; };
+function mastery(name){
+  document.body.className = KIDS[name].cls; applyTheme(name); S = null;
+  const {rows,cols} = mapDims(name), m = masteryOf(name), gold = goldCount(name), total = validFacts(name).length;
+  app.innerHTML = `<div class="mid"><h1>🗺️ ${name}'s Multiplication Map</h1>
+    <div class="sub">🌟 ${gold} / ${total} facts mastered 已熟練<br>Get a fact right <b>${MASTER_N} times on the first try</b> to turn it gold. A miss takes one step back.<br>同一題一次就答對 ${MASTER_N} 次就會變金色，答錯退一步。</div>
+    <div class="card"><div class="mgrid" style="grid-template-columns:34px repeat(${cols.length},1fr)"><div></div>${cols.map(c=>`<div class="mh">×${c}</div>`).join('')}
+      ${rows.map(r=>`<div class="mh">${r}×</div>`+cols.map(c=>{ const n = m[mkey(r,c)]||0, l = Math.min(n,MASTER_N); return `<div class="mc l${l}">${r*c}${l>=MASTER_N?'<i>★</i>':''}</div>`; }).join('')).join('')}</div>
+      <div class="mlegend"><span class="mc l0">new</span><span class="mc l1">1</span><span class="mc l2">2</span><span class="mc l3">gold ★</span></div></div>
+    ${gold===total?'<div class="card" style="text-align:center;font-size:22px;font-weight:800">🎓 Multiplication Master! 乘法大師！</div>':''}
+    <div class="row"><button class="btn" id="home">Home</button></div></div>`;
+  $('#home').onclick = home;
+}
+
+/* ---- level 2 unlock ---- */
+function levelStatus(name){
+  const d = load(), recs = Object.entries(d[name]||{}).sort((a,b)=>a[0]<b[0]?-1:1).slice(-5), avg = recs.length ? recs.reduce((x,[,r])=>x+r.score/r.total,0)/recs.length : 0;
+  return { unlocked: ((d._level||{})[name]||1)>=2 || /[?&]level2=1/.test(location.search), n:recs.length, avg };
+}
+function maybeUnlockL2(name){   // true only the moment it unlocks
+  if(!LEVEL2[name]) return false; const st = levelStatus(name), d = load();
+  if(((d._level||{})[name]||1)>=2) return false;
+  if(st.n>=5 && st.avg>=.9){ d._level = d._level||{}; d._level[name] = 2; save(d); return true; }
+  return false;
+}
+
+/* ---- legendary stickers (achievements) ---- */
+const TIERS = { Ethan:[10,15,20,25], Luke:[6,10,14,18] }, TIER_ICONS = ['🥉','🥈','🥇','💎'], TIER_NAMES = ['Bronze','Silver','Gold','Diamond'];
+const tierOf = (name,score) => TIERS[name].filter(t=>score>=t).length-1;
+const KIDNAMES = ['Ethan','Luke'];
+const dayNo = k => { const [y,m,d] = k.split('-').map(Number); return Date.UTC(y,m-1,d)/86400000; };
+function achCtx(name, d){
+  const sks = [name, name+':piano', name+':L2'], rec = sk => Object.entries(d[sk]||{});
+  const all = sks.flatMap(rec), total = all.reduce((n,[,r])=>n+r.score,0), perfect = all.filter(([,r])=>r.total>0&&r.score===r.total).length;
+  const days3 = rec(name).filter(([,r])=>r.score/r.total>=.9).map(([k])=>dayNo(k)).sort((a,b)=>a-b); let run = 0, best = 0;
+  days3.forEach((x,i)=>{ run = (i>0 && x===days3[i-1]+1) ? run+1 : 1; best = Math.max(best,run); });
+  const has = (a,b) => Object.keys(d[a]||{}).filter(k=>(d[b]||{})[k]).length>0;
+  const hist = ((d._hist||{})[name]||{}).Geometry || [], eq = ((d._shop||{})[name]||{}).equip||{};
+  const sp = ((d._sprint||{})[name]||{}).best||0, m = (d._mastery||{})[name]||{}, gold = validFacts(name).filter(k=>(m[k]||0)>=MASTER_N).length;
+  return { total, perfect, starStreak:best, double:has(name,name+':piano'), brothers:has('Ethan','Luke'), tier:tierOf(name,sp),
+           boss:Object.values(((d._boss||{})[name])||{}).filter(Boolean).length, gold, goldAll:gold===validFacts(name).length,
+           l2:((d._level||{})[name]||1)>=2, l2days:rec(name+':L2').length, perfectPiano:rec(name+':piano').filter(([,r])=>r.score===r.total).length, pianoDays:rec(name+':piano').length,
+           dressed:!!(eq.top&&eq.hat&&eq.face&&eq.extra), team:Object.values(d._team||{}).some(Boolean), geo:hist.length>=20 && hist.slice(-20).reduce((x,y)=>x+y,0)/20>=.9 };
+}
+const ACH = [
+  {id:'perfect',e:'🎯',zh:'完美練習：整次全部一次答對',en:'A perfect practice',t:c=>c.perfect>=1},
+  {id:'streak3',e:'🔥',zh:'連續 3 天都拿 3 顆星',en:'3 days in a row with 3 stars',t:c=>c.starStreak>=3},
+  {id:'double',e:'🧩',zh:'同一天完成數學和鋼琴',en:'Math and piano on the same day',t:c=>c.double},
+  {id:'brothers',e:'👬',zh:'兄弟同一天都完成數學',en:'Both brothers practice the same day',t:c=>c.brothers},
+  {id:'sp1',e:'⚡',zh:'60 秒挑戰拿到 🥉 銅牌',en:'Sprint bronze',t:c=>c.tier>=0},
+  {id:'sp2',e:'🚄',zh:'60 秒挑戰拿到 🥈 銀牌',en:'Sprint silver',t:c=>c.tier>=1},
+  {id:'sp3',e:'🛸',zh:'60 秒挑戰拿到 🥇 金牌',en:'Sprint gold',t:c=>c.tier>=2},
+  {id:'sp4',e:'🪐',zh:'60 秒挑戰拿到 💎 鑽石',en:'Sprint diamond',t:c=>c.tier>=3},
+  {id:'boss1',e:'🐲',zh:'打敗週末 Boss',en:'Beat the weekend boss',t:c=>c.boss>=1},
+  {id:'boss3',e:'🐉',zh:'打敗週末 Boss 3 次',en:'Beat the boss 3 times',t:c=>c.boss>=3},
+  {id:'g1',e:'🧱',zh:'乘法地圖第一格變金色',en:'First gold fact',t:c=>c.gold>=1},
+  {id:'g10',e:'🏗️',zh:'10 個乘法變金色',en:'10 gold facts',t:c=>c.gold>=10},
+  {id:'g25',e:'🏛️',zh:'25 個乘法變金色',en:'25 gold facts',t:c=>c.gold>=25,kids:['Ethan']},
+  {id:'gall',e:'🎓',zh:'乘法大師：地圖全部金色',en:'Multiplication Master',t:c=>c.goldAll},
+  {id:'l2',e:'🪄',zh:'解鎖 Level 2',en:'Unlock Level 2',t:c=>c.l2,kids:['Ethan']},
+  {id:'l2x3',e:'🧠',zh:'完成 Level 2 三次',en:'Finish Level 2 three times',t:c=>c.l2days>=3,kids:['Ethan']},
+  {id:'q100',e:'💯',zh:'累積 100 題一次答對',en:'100 first-try answers',t:c=>c.total>=100},
+  {id:'q500',e:'🏔️',zh:'累積 500 題一次答對',en:'500 first-try answers',t:c=>c.total>=500},
+  {id:'q1000',e:'🌋',zh:'累積 1000 題一次答對',en:'1000 first-try answers',t:c=>c.total>=1000},
+  {id:'pf',e:'🎼',zh:'鋼琴練習全部一次答對',en:'A perfect piano practice',t:c=>c.perfectPiano>=1},
+  {id:'p5',e:'🎻',zh:'完成鋼琴練習 5 次',en:'5 piano practices',t:c=>c.pianoDays>=5},
+  {id:'dress',e:'🕺',zh:'同時穿上衣服、帽子、眼鏡、配件',en:'Fully dressed up',t:c=>c.dressed},
+  {id:'team',e:'🎊',zh:'達成並領取團隊週目標',en:'Win the team goal',t:c=>c.team},
+  {id:'geo',e:'📐',zh:'幾何最近 20 題正確率 90%',en:'Geometry master',t:c=>c.geo,kids:['Ethan']}
+];
+const achFor = name => ACH.filter(a=>(a.kids||KIDNAMES).includes(name));
+function checkAch(name){
+  const d = load(), c = achCtx(name,d); d._ach = d._ach||{}; const got = d._ach[name] = d._ach[name]||[]; d._stickers = d._stickers||{}; const mine = d._stickers[name] = d._stickers[name]||[], fresh = [];
+  for(const a of achFor(name)) if(!got.includes(a.id) && a.t(c)){ got.push(a.id); if(!mine.includes(a.e)) mine.push(a.e); fresh.push(a); }
+  if(fresh.length) save(d);
+  return fresh;
+}
+const achHTML = fresh => fresh.length ? `<div class="legend-new">🏆 Legendary! 傳奇貼紙<br>${fresh.map(a=>`<span>${a.e} ${a.zh}</span>`).join('<br>')}</div>` : '';
+
 /* ---- team goal (both kids, whole week) ---- */
 const TEAM_GOAL = 36;     // stars per week, all four daily practices added up
 const weekStart = () => { const d = new Date(); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; };
@@ -666,7 +808,7 @@ const weekKey = () => fmtDate(weekStart());
 function teamStars(){
   const d = load(); let n = 0;
   for(let i=0;i<7;i++){ const day = weekStart(); day.setDate(day.getDate()+i); const t = fmtDate(day);
-    for(const sk of ['Ethan','Luke','Ethan:piano','Luke:piano']){ const r = d[sk] && d[sk][t]; if(r) n += starsOf(r.score/r.total); } }
+    for(const sk of ['Ethan','Luke','Ethan:piano','Luke:piano','Ethan:L2']){ const r = d[sk] && d[sk][t]; if(r) n += starsOf(r.score/r.total); } }
   return n;
 }
 const isWeekend = () => [0,6].includes(new Date().getDay()) || /[?&]boss=1/.test(location.search);
@@ -680,10 +822,10 @@ function adaptFor(sk){
   if(!d._plan[sk] || d._plan[sk].date!==t){
     const hs = (d._hist||{})[sk] || {}, acc = {};
     for(const [topic,arr] of Object.entries(hs)){ const a = arr.slice(-12); if(a.length>=6) acc[topic] = a.reduce((x,y)=>x+y,0)/a.length; }
-    d._plan[sk] = { date:t, weak:((d._weak||{})[sk]||[]).slice(0,6), acc }; save(d);
+    d._plan[sk] = { date:t, weak:((d._weak||{})[sk]||[]).slice(0,6), acc, mastery:((d._mastery||{})[sk]||{}) }; save(d);
   }
   const pl = d._plan[sk];
-  return { weak:pl.weak, acc:t=>pl.acc[t]===undefined ? null : pl.acc[t] };
+  return { weak:pl.weak, acc:t=>pl.acc[t]===undefined ? null : pl.acc[t], mastery:pl.mastery||{} };
 }
 
 async function forceUpdate(){
@@ -714,9 +856,12 @@ function mergeInto(local, inc){   // never loses anything: unions, max, or "best
     else if(k==='_coins'){ out._coins = out._coins||{}; for(const [n,c] of Object.entries(v)) out._coins[n] = Math.max(out._coins[n]||0, c); }
     else if(k==='_shop'){ out._shop = out._shop||{}; for(const [n,x] of Object.entries(v)){ const m = out._shop[n] = out._shop[n]||{owned:[],equip:{}}; (x.owned||[]).forEach(o=>{ if(!m.owned.includes(o)) m.owned.push(o); }); m.equip = Object.assign({}, x.equip||{}, m.equip||{}); } }
     else if(k==='_avatar'){ out._avatar = out._avatar||{}; for(const [n,x] of Object.entries(v)) out._avatar[n] = Object.assign({}, x, out._avatar[n]||{}); }
+    else if(k==='_mastery'){ out._mastery = out._mastery||{}; for(const [sk,mm] of Object.entries(v)){ const m = out._mastery[sk] = out._mastery[sk]||{}; for(const [f,n] of Object.entries(mm)) m[f] = Math.max(m[f]||0, n); } }
+    else if(k==='_level'){ out._level = out._level||{}; for(const [n,l] of Object.entries(v)) out._level[n] = Math.max(out._level[n]||1, l); }
+    else if(k==='_ach'){ out._ach = out._ach||{}; for(const [n,arr] of Object.entries(v)){ const m = out._ach[n] = out._ach[n]||[]; arr.forEach(x=>{ if(!m.includes(x)){ m.push(x); added++; } }); } }
     else if(k==='_team'){ out._team = Object.assign({}, v, out._team||{}); }
     else if(k==='_boss'){ out._boss = out._boss||{}; for(const [n,w] of Object.entries(v)) out._boss[n] = Object.assign({}, w, out._boss[n]||{}); }
-    else if(k==='_sprint'){ out._sprint = out._sprint||{}; for(const [n,r] of Object.entries(v)){ const m = out._sprint[n] = out._sprint[n]||{best:0}; m.best = Math.max(m.best||0, r.best||0); if((r.coinedOn||'')>(m.coinedOn||'')) m.coinedOn = r.coinedOn; } }
+    else if(k==='_sprint'){ out._sprint = out._sprint||{}; for(const [n,r] of Object.entries(v)){ const m = out._sprint[n] = out._sprint[n]||{best:0}; m.best = Math.max(m.best||0, r.best||0); if((r.coinedOn||'')>(m.coinedOn||'')) m.coinedOn = r.coinedOn; if(r.wk && (!m.wk || r.wk.key>m.wk.key || (r.wk.key===m.wk.key && r.wk.best>m.wk.best))) m.wk = r.wk; } }
     else if(k==='_hist'){ out._hist = out._hist||{}; for(const [sk,topics] of Object.entries(v)){ const m = out._hist[sk] = out._hist[sk]||{}; for(const [t,arr] of Object.entries(topics)) if(!m[t] || arr.length>m[t].length) m[t] = arr; } }
     else if(k==='_weak'){ out._weak = out._weak||{}; for(const [sk,arr] of Object.entries(v)){ const m = out._weak[sk] = out._weak[sk]||[]; arr.forEach(f=>{ if(!m.includes(f)) m.push(f); }); out._weak[sk] = m.slice(-12); } }
     else if(k[0]==='_'){ /* unknown extras: keep ours */ }
@@ -766,15 +911,21 @@ function home(){
   let h = `<div class="narrow"><h1>🧮 Daily Practice 🎹</h1><div class="sub">${t} · pick your name</div>
     <div class="card team"><b>🤝 Team goal this week 本週團隊目標</b>
       <div class="prog"><i style="width:${Math.min(100,ts/TEAM_GOAL*100)}%"></i></div>
+      <div class="sub" style="margin:0 0 6px">⏱️ This week's best sprint 本週最佳：${KIDNAMES.map(n=>{ const w = ((data._sprint||{})[n]||{}).wk, b = w && w.key===weekKey() ? w.best : 0; return `${n} ${b||'–'}${b&&tierOf(n,b)>=0?' '+TIER_ICONS[tierOf(n,b)]:''}`; }).join(' · ')}</div>
       <div>⭐ ${ts} / ${TEAM_GOAL} ${ts>=TEAM_GOAL ? (claimed?' · 🎉 Reward claimed! 領過了':'<br><button class="btn" id="claim" style="margin-top:8px">🎁 Claim +50 🪙 for each</button>') : ` · ${TEAM_GOAL-ts} more ⭐ and you both win a bonus!`}</div></div>`;
   for(const [n,k] of Object.entries(KIDS)){
     const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
       return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small>${subject==='math'?`<span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span>`:''}</button>`; };
-    const best = ((data._sprint||{})[n]||{}).best, cleared = ((data._boss||{})[n]||{})[bossKey()];
-    h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') +
+    const best = ((data._sprint||{})[n]||{}).best, ti = best ? tierOf(n,best) : -1, cleared = ((data._boss||{})[n]||{})[bossKey()];
+    let l2card = '';
+    if(LEVEL2[n]){ const ls = levelStatus(n);
+      l2card = ls.unlocked ? card(`⬆️ ${n} · Level 2`, LEVEL2[n].desc, n+':L2', 'level2').replace('class="kid','class="kid l2')
+        : `<div class="kid ethan locked">🔒 ${n} · Level 2<small>Unlocks when your last 5 daily practices average 90% 最近 5 次平均 90% 就解鎖</small><small>${ls.n}/5 practices · average ${Math.round(ls.avg*100)}%</small></div>`; }
+    h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') + l2card +
       `<div class="books">
-        <button class="btn ghost" data-act="sprint" data-n="${n}">⏱️ 60s Sprint${best?` · best ${best}`:''}</button>
+        <button class="btn ghost" data-act="sprint" data-n="${n}">⏱️ 60s Sprint${best?` · best ${best}${ti>=0?' '+TIER_ICONS[ti]:''}`:''}</button>
         <button class="btn ghost" data-act="boss" data-n="${n}">${weekend?(cleared?'🐉 Boss ✅':'🐉 Weekend Boss!'):'🔒 Boss (Sat–Sun)'}</button>
+        <button class="btn ghost" data-act="mastery" data-n="${n}">🗺️ Mastery ${goldCount(n)}/${validFacts(n).length}</button>
         <button class="btn ghost" data-act="avatar" data-n="${n}">👕 Avatar</button>
         <button class="btn ghost" data-act="book" data-n="${n}">📒 Stickers (${owned(n).filter(x=>STICKERS.includes(x)).length}/${STICKERS.length})</button>
         <button class="btn ghost" data-act="shop" data-n="${n}">🛒 Shop · 🪙 ${coinsOf(n)}</button></div>`;
@@ -786,7 +937,7 @@ function home(){
   app.querySelectorAll('.kid .av').forEach(el=>el.onclick=e=>{ e.stopPropagation(); avatar(el.dataset.n); });   // tap the little person = dress-up page, not practice
   app.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
     const n = b.dataset.n, a = b.dataset.act;
-    if(a==='book') book(n); else if(a==='shop') shop(n); else if(a==='avatar') avatar(n); else if(a==='sprint') sprint(n);
+    if(a==='book') book(n); else if(a==='shop') shop(n); else if(a==='avatar') avatar(n); else if(a==='mastery') mastery(n); else if(a==='sprint') sprint(n);
     else if(a==='boss'){ if(weekend) startBoss(n); else dialog('The boss only shows up on Saturday and Sunday! 🐉<br>週末才會出現喔', [{label:'OK'}]); }
   });
   if($('#claim')) $('#claim').onclick = () => { const d = load(); d._team = d._team || {}; d._team[weekKey()] = true; save(d); Object.keys(KIDS).forEach(n=>addCoins(n,50)); burst(40); home(); };
@@ -794,9 +945,11 @@ function home(){
 
 function book(name){
   document.body.className = KIDS[name].cls; applyTheme(name); S = null;
-  const mine = owned(name), special = Object.values(BONUS), extras = mine.filter(x=>!STICKERS.includes(x)&&!special.includes(x));
+  const mine = owned(name), special = Object.values(BONUS), extras = mine.filter(x=>!STICKERS.includes(x)&&!special.includes(x)&&!ACH.some(a=>a.e===x));
   app.innerHTML = `<div class="narrow"><h1>📒 ${name}'s Sticker Book</h1><div class="sub">${mine.filter(x=>STICKERS.includes(x)).length} / ${STICKERS.length} · finish each day's practice to unlock a sticker (3 ⭐ = 2!)<br>Streak badges: practice 3, 7, 14, 30 days in a row 🔥 · Boss badges: beat the weekend boss 🐉</div>
     <div class="grid">${STICKERS.map(s=>mine.includes(s)?`<div class="stk">${s}</div>`:`<div class="stk lock">❓</div>`).join('')}${Object.entries(BONUS).map(([d,b])=>mine.includes(b)?`<div class="stk">${b}</div>`:`<div class="stk lock" title="${d}-day streak">🔥${d}</div>`).join('')}${extras.map(b=>`<div class="stk">${b}</div>`).join('')}</div>
+    <h3 style="margin:18px 0 8px">🏆 Legendary 傳奇貼紙</h3>
+    <div class="legs">${achFor(name).map(a=>{ const on = ((load()._ach||{})[name]||[]).includes(a.id); return `<div class="leg ${on?'on':''}"><span class="e">${on?a.e:'❓'}</span><span>${a.zh}<br><small>${a.en}</small></span></div>`; }).join('')}</div>
     <div class="row"><button class="btn" id="home">Home</button></div></div>`;
   $('#home').onclick = home;
 }
@@ -806,10 +959,10 @@ function newSession(name, sk, subject, qs, extra){
            first:0, stats:{}, log:[], coins:0, answered:false, input:'', extra, padOpen: innerWidth>=860 };
 }
 function start(name, extra=false, subject='math'){
-  const sk = subject==='piano' ? name+':piano' : name;
+  const sk = subject==='piano' ? name+':piano' : subject==='level2' ? name+':L2' : name;
   ADAPT = adaptFor(sk);
   rnd = makeRng(`${sk}|${todayStr()}|${extra?Math.random():'daily'}`);
-  S = newSession(name, sk, subject, (subject==='piano' ? PIANO : KIDS)[name].build(), extra);
+  S = newSession(name, sk, subject, (subject==='piano' ? PIANO : subject==='level2' ? LEVEL2 : KIDS)[name].build(), extra);
   document.body.className = KIDS[name].cls; applyTheme(name);
   show();
 }
@@ -970,7 +1123,7 @@ function next(){ S.i++; show(); }
 function finish(){
   if(S.mode==='boss') return bossFinish();
   const pct = S.first/S.total, stars = starsOf(pct);
-  let won = [], earned = 0;
+  let won = [], earned = 0, l2new = false, fresh = [];
   if(!S.extra){
     const d = load(), t = todayStr(); d[S.sk] = d[S.sk] || {};
     const firstToday = !d[S.sk][t];
@@ -987,6 +1140,7 @@ function finish(){
         if(e.fact){ if(!e.ok){ if(!wl.includes(e.fact)) wl.push(e.fact); } else wl = wl.filter(f=>f!==e.fact); }
       });
       d._weak[S.sk] = wl.slice(-12);
+      if(S.subject==='math') masteryAdd(d, S.sk, S.log);
     }
     save(d);
     if(firstToday){
@@ -994,13 +1148,16 @@ function finish(){
       addCoins(S.name, earned);
       const b = BONUS[streak(S.sk)];               // streak milestone badge
       if(b){ const d2 = load(); d2._stickers = d2._stickers || {}; const m = d2._stickers[S.name] = d2._stickers[S.name] || []; if(!m.includes(b)){ m.push(b); won.push(b); save(d2); } }
+      if(S.subject==='math' && maybeUnlockL2(S.name)) l2new = true;
     }
+    fresh = checkAch(S.name);
   }
   const rows = Object.entries(S.stats).map(([t,s])=>{ const weak = s.right/s.total < .7; return `<tr><td>${t}</td><td class="${weak?'weak':''}">${s.right}/${s.total}${weak?' ← practice more':''}</td></tr>`; }).join('');
-  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
+  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':S.subject==='level2'?'⬆️':'🎊'}</h1>
     <div class="card"><div class="av-big">${avatarSVG(S.name)}</div><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
     ${earned?`<div class="sub" style="color:var(--ink);font-weight:700;font-size:20px">🪙 +${earned} coins</div>`:''}
+    ${l2new?'<div class="legend-new">⬆️ Level 2 unlocked! 解鎖 Level 2！<br><small>Find it on the home screen 在首頁</small></div>':''}${achHTML(fresh)}
     ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
     <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
     <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="shopb">🛒 Shop</button><button class="btn ghost" id="home">Home</button></div>
@@ -1028,10 +1185,11 @@ function bossFinish(){
     d._stickers = d._stickers || {}; const m = d._stickers[name] = d._stickers[name] || []; if(m.includes(badge)) badge = null; else m.push(badge);
   }
   save(d); if(coins) addCoins(name, coins);
+  const fresh = checkAch(name);
   const ov = document.createElement('div'); ov.className = 'victory';
   ov.innerHTML = `<div class="trophy">🏆</div><h2>BOSS DEFEATED!</h2><div class="boom">${monster} 💥</div>
     <div class="champ">${name} the Champion! 冠軍！</div><div>${S.first}/${S.total} hits ⚔️</div>
-    ${coins?`<div class="loot">🪙 +${coins}${badge?` &nbsp; new badge ${badge}`:''}</div>`:'<div class="loot">(already collected this weekend 這個週末領過囉)</div>'}
+    ${coins?`<div class="loot">🪙 +${coins}${badge?` &nbsp; new badge ${badge}`:''}</div>`:'<div class="loot">(already collected this weekend 這個週末領過囉)</div>'}${achHTML(fresh)}
     <button class="btn" id="vclose" style="margin-top:18px">Continue →</button>`;
   document.body.appendChild(ov); rain(); burst(60);
   $('#vclose').onclick = () => { ov.remove(); home(); };
@@ -1084,10 +1242,13 @@ function sprintEnd(){
   const d = load(), t = todayStr(); d._sprint = d._sprint || {}; const r = d._sprint[sp.name] = d._sprint[sp.name] || {best:0};
   const prev = r.best, record = sp.score > prev;
   if(record) r.best = sp.score;
+  if(!r.wk || r.wk.key!==weekKey()) r.wk = { key:weekKey(), best:0 }; if(sp.score>r.wk.best) r.wk.best = sp.score;
   let coins = 0; if(r.coinedOn!==t){ coins = Math.min(sp.score,20); r.coinedOn = t; }
   save(d); if(coins) addCoins(sp.name, coins);
+  const fresh = checkAch(sp.name), ti = tierOf(sp.name,sp.score), nxt = TIERS[sp.name][ti+1];
   app.innerHTML = `<div class="narrow"><h1>⏱️ Time's up!</h1><div class="card"><div class="score">${sp.score}</div><div class="sub">correct in 60 seconds</div>
     <div class="sub" style="color:var(--ink);font-weight:700">${record?(prev?`🎉 New record! (old record ${prev})`:'🎉 First record!'):`Your record: ${r.best}`}${coins?` · 🪙 +${coins}`:''}</div>
+    <div class="sub" style="color:var(--ink);font-weight:700">${ti>=0?`${TIER_ICONS[ti]} ${TIER_NAMES[ti]}!`:''} ${nxt?`Next: ${TIER_ICONS[ti+1]} at ${nxt}`:'Top tier! 💎'}</div>${achHTML(fresh)}
     <div class="row"><button class="btn" id="again">Try again 🔁</button><button class="btn ghost" id="home">Home</button></div></div></div>`;
   if(record) { burst(50); rain(2500); }
   $('#again').onclick = () => sprint(sp.name); $('#home').onclick = home;
