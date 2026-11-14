@@ -106,7 +106,9 @@
   .legs { display:grid; gap:8px; } .leg { display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px; padding:8px 12px; opacity:.55; } .leg.on { opacity:1; box-shadow:0 0 0 2px #fcd34d inset; } .leg .e { font-size:34px; width:44px; text-align:center; } .leg small { color:#6b7280; }
   .ver { text-align:center; color:#9ca3af; font-size:13px; margin:18px 0 6px; }
   /* shop, team, themes, boss */
-  .books { flex-wrap:wrap; } .books .btn { flex:1 1 45%; }
+  .books { flex-wrap:wrap; gap:8px; margin-bottom:12px; } .books .btn { flex:1 1 30%; font-size:15px; padding:10px 4px; }
+  .kid { padding-top:14px; padding-bottom:14px; font-size:22px; margin-bottom:8px; } .kid small { font-size:13px; margin-top:2px; }
+  .kid .av { width:64px; height:78px; top:6px; }
   .team { text-align:center; } .prog { height:16px; background:#e5e7eb; border-radius:99px; overflow:hidden; margin:8px 0; } .prog i { display:block; height:100%; background:linear-gradient(90deg,#4f8cff,#ff9a3c); transition:width .6s; }
   .grid.shop { grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); }
   .item { border:0; background:#fff; border-radius:18px; padding:10px 4px; box-shadow:0 2px 6px rgba(0,0,0,.08); cursor:pointer; font-family:inherit; }
@@ -342,33 +344,33 @@ function qLength(){
 
 /* ============ Level 2 (unlocked at 90%+ average): near grade-3, still one short daily session ============ */
 const fmtT = (h,m) => `${h}:${pad2(m)}`;
-function qDiv(){ const b=ri(2,9), c=ri(2,9); return { topic:'L2 · Division', html:`<div class="big">${b*c} ÷ ${b} = ?</div>`, answer:String(c), fact:`d:${b*c}/${b}`, hint:[`What number times ${b} makes ${b*c}?`,'Division is multiplication backwards.'] }; }
+function qDiv(){ const b=ri(2,9), c=ri(2,9); return { topic:'⬆️ Division', html:`<div class="big">${b*c} ÷ ${b} = ?</div>`, answer:String(c), fact:`d:${b*c}/${b}`, hint:[`What number times ${b} makes ${b*c}?`,'Division is multiplication backwards.'] }; }
 function qWord(){
   const t = ri(0,2), thing = pick(['pencils','apples','stickers','toy cars']), box = pick(['boxes','bags','baskets']);
-  if(t===0){ const g=ri(3,9), n=ri(3,9); return numQ('L2 · Word problems',`There are ${g} ${box} with ${n} ${thing} in each.<br>How many ${thing} in all?`,'',g*n,['Are the groups equal? Which operation fits?']); }
-  if(t===1){ const g=ri(3,8), n=ri(3,9); return numQ('L2 · Word problems',`${g*n} ${thing} are shared equally among ${g} friends.<br>How many does each friend get?`,'',n,['Sharing equally means making equal groups.']); }
-  const a=ri(35,60), b=ri(10,25), c=ri(5,20); return numQ('L2 · Word problems',`Mia had ${a} stickers. She gave away ${b}, then got ${c} more.<br>How many does she have now?`,'',a-b+c,['Do it in two steps, one at a time.']);
+  if(t===0){ const g=ri(3,9), n=ri(3,9); return numQ('⬆️ Word problems',`There are ${g} ${box} with ${n} ${thing} in each.<br>How many ${thing} in all?`,'',g*n,['Are the groups equal? Which operation fits?']); }
+  if(t===1){ const g=ri(3,8), n=ri(3,9); return numQ('⬆️ Word problems',`${g*n} ${thing} are shared equally among ${g} friends.<br>How many does each friend get?`,'',n,['Sharing equally means making equal groups.']); }
+  const a=ri(35,60), b=ri(10,25), c=ri(5,20); return numQ('⬆️ Word problems',`Mia had ${a} stickers. She gave away ${b}, then got ${c} more.<br>How many does she have now?`,'',a-b+c,['Do it in two steps, one at a time.']);
 }
 function qArea(){
-  if(rnd()<.6){ const r=ri(3,6), c=ri(3,7); return numQ('L2 · Area & perimeter','Each small square is 1 square unit.<br>What is the <b>area</b>?', gridSVG(r,c), r*c, ['Count one row, then think about how many rows.']); }
-  const w=ri(2,6), h=ri(4,9); return numQ('L2 · Area & perimeter',`A rectangle is ${h} units long and ${w} units wide.<br>What is its <b>perimeter</b>?`, rectLabelSVG(h,w), 2*(h+w), ['Perimeter is all the way around: how many sides, how long is each?']);
+  if(rnd()<.6){ const r=ri(3,6), c=ri(3,7); return numQ('⬆️ Area & perimeter','Each small square is 1 square unit.<br>What is the <b>area</b>?', gridSVG(r,c), r*c, ['Count one row, then think about how many rows.']); }
+  const w=ri(2,6), h=ri(4,9); return numQ('⬆️ Area & perimeter',`A rectangle is ${h} units long and ${w} units wide.<br>What is its <b>perimeter</b>?`, rectLabelSVG(h,w), 2*(h+w), ['Perimeter is all the way around: how many sides, how long is each?']);
 }
 function qFracCmp(){
   const [a,b] = shuffle([2,3,4,6,8]).slice(0,2), big = Math.min(a,b);
-  return choice('L2 · Fractions',`Which fraction is <b>bigger</b>?`, `<div class="big" style="font-size:40px">1/${a} &nbsp; or &nbsp; 1/${b}</div>`, `1/${big}`, [`1/${a}`,`1/${b}`], ['Cut a pizza into more pieces: are the pieces bigger or smaller?'], 2);
+  return choice('⬆️ Fractions',`Which fraction is <b>bigger</b>?`, `<div class="big" style="font-size:40px">1/${a} &nbsp; or &nbsp; 1/${b}</div>`, `1/${big}`, [`1/${a}`,`1/${b}`], ['Cut a pizza into more pieces: are the pieces bigger or smaller?'], 2);
 }
-function qTimes10(){ const a=ri(2,9), t=ri(2,9); return { topic:'L2 · Number sense', html:`<div class="big">${a} × ${t*10} = ?</div>`, answer:String(a*t*10), hint:[`Try ${a} × ${t} first.`,'Then think about the tens.'] }; }
+function qTimes10(){ const a=ri(2,9), t=ri(2,9); return { topic:'⬆️ Number sense', html:`<div class="big">${a} × ${t*10} = ?</div>`, answer:String(a*t*10), hint:[`Try ${a} × ${t} first.`,'Then think about the tens.'] }; }
 function qThree(){
-  if(rnd()<.5){ const a=ri(120,480), b=ri(120,480); return { topic:'L2 · Number sense', html:`<div class="big">${a} + ${b} = ?</div>`, answer:String(a+b), hint:['Add the ones, then the tens, then the hundreds.','Regroup when a place gets to 10.'] }; }
-  const m=ri(400,900), sb=ri(120,m-150); return { topic:'L2 · Number sense', html:`<div class="big">${m} − ${sb} = ?</div>`, answer:String(m-sb), hint:['Subtract the ones, tens, hundreds in turn.','Trade 1 ten for 10 ones if you need to.'] };
+  if(rnd()<.5){ const a=ri(120,480), b=ri(120,480); return { topic:'⬆️ Number sense', html:`<div class="big">${a} + ${b} = ?</div>`, answer:String(a+b), hint:['Add the ones, then the tens, then the hundreds.','Regroup when a place gets to 10.'] }; }
+  const m=ri(400,900), sb=ri(120,m-150); return { topic:'⬆️ Number sense', html:`<div class="big">${m} − ${sb} = ?</div>`, answer:String(m-sb), hint:['Subtract the ones, tens, hundreds in turn.','Trade 1 ten for 10 ones if you need to.'] };
 }
 function qRound(){
-  if(rnd()<.5){ let n; do{ n=ri(11,98); }while(n%10===5); return numQ('L2 · Number sense',`Round <b>${n}</b> to the nearest 10.`,'',Math.round(n/10)*10,['Look at the ones digit: 5 or more goes up.']); }
-  let n; do{ n=ri(101,949); }while(n%100===50); return numQ('L2 · Number sense',`Round <b>${n}</b> to the nearest 100.`,'',Math.round(n/100)*100,['Look at the tens digit: 5 or more goes up.']);
+  if(rnd()<.5){ let n; do{ n=ri(11,98); }while(n%10===5); return numQ('⬆️ Number sense',`Round <b>${n}</b> to the nearest 10.`,'',Math.round(n/10)*10,['Look at the ones digit: 5 or more goes up.']); }
+  let n; do{ n=ri(101,949); }while(n%100===50); return numQ('⬆️ Number sense',`Round <b>${n}</b> to the nearest 100.`,'',Math.round(n/100)*100,['Look at the tens digit: 5 or more goes up.']);
 }
 function qElapsed(){
   const h=ri(8,11), m=ri(0,10)*5, dur=ri(3,11)*5, tot=h*60+m+dur;
-  return numQ('L2 · Time',`The lesson starts at ${fmtT(h,m)} and ends at ${fmtT(Math.floor(tot/60),tot%60)}.<br>How many minutes long is it?`,'',dur,['Count on from the start time to the end time.']);
+  return numQ('⬆️ Time',`The lesson starts at ${fmtT(h,m)} and ends at ${fmtT(Math.floor(tot/60),tot%60)}.<br>How many minutes long is it?`,'',dur,['Count on from the start time to the end time.']);
 }
 
 /* ============ kid profiles ============ */
@@ -408,6 +410,10 @@ const KIDS = {
       tilt(cnt);
       const rest = [];
       for(const [dom,fns] of Object.entries(plan)){ const order = shuffle(fns); for(let i=0;i<cnt[dom];i++) rest.push(...uniq(1, order[i%order.length])); }
+      if(levelStatus('Ethan').unlocked){      // strong week? swap 5 of the easier questions for slightly harder ones (never the geometry)
+        const hard = [...uniq(2,qDiv), ...uniq(1,qWord), ...uniq(1,qFracCmp), ...uniq(1,qThree)];
+        shuffle(rest.map((q,i)=>[q,i]).filter(([q])=>q.topic!=='Geometry').map(([,i])=>i)).slice(0,hard.length).forEach((i,j)=>{ rest[i] = hard[j]; });
+      }
       return shuffle([...mul, ...rest]);
     }
   },
@@ -426,19 +432,6 @@ const KIDS = {
       for(let i=0;i<cnt['Add 進位'];i++){ let a,b,k; do{ a=ri(2,9); b=ri(2,9); k=Math.min(a,b)+'+'+Math.max(a,b); }while(a+b<11||seenA.has(k)); seenA.add(k); out.push(qAdd(a,b)); }
       for(let i=0;i<cnt['Subtract 退位'];i++){ let m,sb,k; do{ m=ri(11,18); sb=ri(m%10+1,9); k=m+'-'+sb; }while(seenS.has(k)); seenS.add(k); out.push(qSub(m,sb)); }
       for(const T of ['Multiply ×4','Multiply ×3','Multiply ×2']){ const t = +T.slice(-1); for(let i=0;i<cnt[T];i++){ let b,k,g=0; do{ b=ri(2,9); k=t+'x'+b; g++; }while(seenM.has(k) || (g<25 && (ADAPT.mastery[mkey(t,b)]||0)>=MASTER_N)); seenM.add(k); out.push(qMul(t,b,T)); } }
-      return shuffle(out);
-    }
-  }
-};
-
-const LEVEL2 = {
-  Ethan: {
-    cls:'ethan', desc:'Level 2 · Division · Word problems · Area · Fractions · Time (20 questions)',
-    build(){
-      const out = [];
-      ADAPT.weak.filter(f=>f[0]==='d').slice(0,2).forEach(f=>{ const [a,b] = f.slice(2).split('/').map(Number); out.push({ topic:'L2 · Division', html:`<div class="big">${a} ÷ ${b} = ?</div>`, answer:String(a/b), fact:f, hint:[`What number times ${b} makes ${a}?`,'Division is multiplication backwards.'] }); });
-      const plan = [[qDiv,4-out.length],[qWord,4],[qArea,3],[qFracCmp,2],[qTimes10,2],[qThree,2],[qRound,2],[qElapsed,1]];
-      for(const [fn,n] of plan) out.push(...uniq(n, fn));
       return shuffle(out);
     }
   }
@@ -578,7 +571,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v15 · 2026-11-13';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v16 · 2026-11-13';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
@@ -742,7 +735,7 @@ function levelStatus(name){
   return { unlocked: ((d._level||{})[name]||1)>=2 || /[?&]level2=1/.test(location.search), n:recs.length, avg };
 }
 function maybeUnlockL2(name){   // true only the moment it unlocks
-  if(!LEVEL2[name]) return false; const st = levelStatus(name), d = load();
+  if(name!=='Ethan') return false; const st = levelStatus(name), d = load();
   if(((d._level||{})[name]||1)>=2) return false;
   if(st.n>=5 && st.avg>=.9){ d._level = d._level||{}; d._level[name] = 2; save(d); return true; }
   return false;
@@ -754,7 +747,7 @@ const tierOf = (name,score) => TIERS[name].filter(t=>score>=t).length-1;
 const KIDNAMES = ['Ethan','Luke'];
 const dayNo = k => { const [y,m,d] = k.split('-').map(Number); return Date.UTC(y,m-1,d)/86400000; };
 function achCtx(name, d){
-  const sks = [name, name+':piano', name+':L2'], rec = sk => Object.entries(d[sk]||{});
+  const sks = [name, name+':piano'], rec = sk => Object.entries(d[sk]||{});
   const all = sks.flatMap(rec), total = all.reduce((n,[,r])=>n+r.score,0), perfect = all.filter(([,r])=>r.total>0&&r.score===r.total).length;
   const days3 = rec(name).filter(([,r])=>r.score/r.total>=.9).map(([k])=>dayNo(k)).sort((a,b)=>a-b); let run = 0, best = 0;
   days3.forEach((x,i)=>{ run = (i>0 && x===days3[i-1]+1) ? run+1 : 1; best = Math.max(best,run); });
@@ -763,7 +756,7 @@ function achCtx(name, d){
   const sp = ((d._sprint||{})[name]||{}).best||0, m = (d._mastery||{})[name]||{}, gold = validFacts(name).filter(k=>(m[k]||0)>=MASTER_N).length;
   return { total, perfect, starStreak:best, double:has(name,name+':piano'), brothers:has('Ethan','Luke'), tier:tierOf(name,sp),
            boss:Object.values(((d._boss||{})[name])||{}).filter(Boolean).length, gold, goldAll:gold===validFacts(name).length,
-           l2:((d._level||{})[name]||1)>=2, l2days:rec(name+':L2').length, perfectPiano:rec(name+':piano').filter(([,r])=>r.score===r.total).length, pianoDays:rec(name+':piano').length,
+           l2:((d._level||{})[name]||1)>=2, perfectPiano:rec(name+':piano').filter(([,r])=>r.score===r.total).length, pianoDays:rec(name+':piano').length,
            dressed:!!(eq.top&&eq.hat&&eq.face&&eq.extra), team:Object.values(d._team||{}).some(Boolean), geo:hist.length>=20 && hist.slice(-20).reduce((x,y)=>x+y,0)/20>=.9 };
 }
 const ACH = [
@@ -781,8 +774,8 @@ const ACH = [
   {id:'g10',e:'🏗️',zh:'10 個乘法變金色',en:'10 gold facts',t:c=>c.gold>=10},
   {id:'g25',e:'🏛️',zh:'25 個乘法變金色',en:'25 gold facts',t:c=>c.gold>=25,kids:['Ethan']},
   {id:'gall',e:'🎓',zh:'乘法大師：地圖全部金色',en:'Multiplication Master',t:c=>c.goldAll},
-  {id:'l2',e:'🪄',zh:'解鎖 Level 2',en:'Unlock Level 2',t:c=>c.l2,kids:['Ethan']},
-  {id:'l2x3',e:'🧠',zh:'完成 Level 2 三次',en:'Finish Level 2 three times',t:c=>c.l2days>=3,kids:['Ethan']},
+  {id:'l2',e:'🪄',zh:'解鎖進階題（最近 5 次平均 90%）',en:'Unlock the harder questions',t:c=>c.l2,kids:['Ethan']},
+  {id:'perfect3',e:'🎪',zh:'3 次完美練習',en:'Three perfect practices',t:c=>c.perfect>=3},
   {id:'q100',e:'💯',zh:'累積 100 題一次答對',en:'100 first-try answers',t:c=>c.total>=100},
   {id:'q500',e:'🏔️',zh:'累積 500 題一次答對',en:'500 first-try answers',t:c=>c.total>=500},
   {id:'q1000',e:'🌋',zh:'累積 1000 題一次答對',en:'1000 first-try answers',t:c=>c.total>=1000},
@@ -808,7 +801,7 @@ const weekKey = () => fmtDate(weekStart());
 function teamStars(){
   const d = load(); let n = 0;
   for(let i=0;i<7;i++){ const day = weekStart(); day.setDate(day.getDate()+i); const t = fmtDate(day);
-    for(const sk of ['Ethan','Luke','Ethan:piano','Luke:piano','Ethan:L2']){ const r = d[sk] && d[sk][t]; if(r) n += starsOf(r.score/r.total); } }
+    for(const sk of ['Ethan','Luke','Ethan:piano','Luke:piano']){ const r = d[sk] && d[sk][t]; if(r) n += starsOf(r.score/r.total); } }
   return n;
 }
 const isWeekend = () => [0,6].includes(new Date().getDay()) || /[?&]boss=1/.test(location.search);
@@ -917,11 +910,7 @@ function home(){
     const card = (title, desc, sk, subject) => { const done = data[sk] && data[sk][t];
       return `<button class="kid ${k.cls} ${subject==='piano'?'piano':''} ${done?'done':''}" data-n="${n}" data-s="${subject}">${title}<small>${desc}</small><small>🔥 ${streak(sk)}-day streak${done?` · today: ${done.score}/${done.total}`:''}</small>${subject==='math'?`<span class="av" data-n="${n}" title="Dress up 換裝">${avatarSVG(n)}<em>👕</em></span>`:''}</button>`; };
     const best = ((data._sprint||{})[n]||{}).best, ti = best ? tierOf(n,best) : -1, cleared = ((data._boss||{})[n]||{})[bossKey()];
-    let l2card = '';
-    if(LEVEL2[n]){ const ls = levelStatus(n);
-      l2card = ls.unlocked ? card(`⬆️ ${n} · Level 2`, LEVEL2[n].desc, n+':L2', 'level2').replace('class="kid','class="kid l2')
-        : `<div class="kid ethan locked">🔒 ${n} · Level 2<small>Unlocks when your last 5 daily practices average 90% 最近 5 次平均 90% 就解鎖</small><small>${ls.n}/5 practices · average ${Math.round(ls.avg*100)}%</small></div>`; }
-    h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') + l2card +
+    h += card(`🧮 ${n}`, k.desc, n, 'math') + card(`🎹 ${n} · Piano`, PIANO[n].desc, n+':piano', 'piano') +
       `<div class="books">
         <button class="btn ghost" data-act="sprint" data-n="${n}">⏱️ 60s Sprint${best?` · best ${best}${ti>=0?' '+TIER_ICONS[ti]:''}`:''}</button>
         <button class="btn ghost" data-act="boss" data-n="${n}">${weekend?(cleared?'🐉 Boss ✅':'🐉 Weekend Boss!'):'🔒 Boss (Sat–Sun)'}</button>
@@ -959,10 +948,10 @@ function newSession(name, sk, subject, qs, extra){
            first:0, stats:{}, log:[], coins:0, answered:false, input:'', extra, padOpen: innerWidth>=860 };
 }
 function start(name, extra=false, subject='math'){
-  const sk = subject==='piano' ? name+':piano' : subject==='level2' ? name+':L2' : name;
+  const sk = subject==='piano' ? name+':piano' : name;
   ADAPT = adaptFor(sk);
   rnd = makeRng(`${sk}|${todayStr()}|${extra?Math.random():'daily'}`);
-  S = newSession(name, sk, subject, (subject==='piano' ? PIANO : subject==='level2' ? LEVEL2 : KIDS)[name].build(), extra);
+  S = newSession(name, sk, subject, (subject==='piano' ? PIANO : KIDS)[name].build(), extra);
   document.body.className = KIDS[name].cls; applyTheme(name);
   show();
 }
@@ -1153,11 +1142,11 @@ function finish(){
     fresh = checkAch(S.name);
   }
   const rows = Object.entries(S.stats).map(([t,s])=>{ const weak = s.right/s.total < .7; return `<tr><td>${t}</td><td class="${weak?'weak':''}">${s.right}/${s.total}${weak?' ← practice more':''}</td></tr>`; }).join('');
-  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':S.subject==='level2'?'⬆️':'🎊'}</h1>
+  app.innerHTML = `<div class="narrow"><h1>${S.name}, all done! ${S.subject==='piano'?'🎹':'🎊'}</h1>
     <div class="card"><div class="av-big">${avatarSVG(S.name)}</div><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="score">${S.first} / ${S.total}</div><div class="sub">correct on the first try (一次就對)</div>
     ${earned?`<div class="sub" style="color:var(--ink);font-weight:700;font-size:20px">🪙 +${earned} coins</div>`:''}
-    ${l2new?'<div class="legend-new">⬆️ Level 2 unlocked! 解鎖 Level 2！<br><small>Find it on the home screen 在首頁</small></div>':''}${achHTML(fresh)}
+    ${l2new?'<div class="legend-new">⬆️ Harder questions unlocked! 解鎖進階題<br><small>A few will be mixed into your daily practice 每天會混入幾題</small></div>':''}${achHTML(fresh)}
     ${won.length?`<div class="sub" style="color:var(--ink);font-weight:700">🎁 New sticker${won.length>1?'s':''} unlocked!</div><div class="newstk">${won.join(' ')}</div>`:''}
     <table><tr><th>Topic</th><th>Score</th></tr>${rows}</table>
     <div class="row"><button class="btn" id="more">Practice again 🔁</button><button class="btn ghost" id="shopb">🛒 Shop</button><button class="btn ghost" id="home">Home</button></div>
