@@ -109,6 +109,7 @@
   .node .dot { width:60px; height:60px; border-radius:50%; margin:0 auto 4px; display:flex; align-items:center; justify-content:center; font-size:30px; background:#fde68a; box-shadow:0 0 0 3px #fbbf24 inset; overflow:hidden; }
   .node.lock .dot { background:#e5e7eb; box-shadow:0 0 0 3px #d1d5db inset; opacity:.7; } .node.now .dot { width:74px; height:74px; background:#fff; box-shadow:0 0 0 4px var(--accent); animation:bounce .8s ease infinite alternate; } .node.now .dot svg { width:100%; height:100%; }
   .victory .av-big svg { width:150px; height:180px; }
+  .item .e svg.shirt { width:54px; height:54px; display:block; margin:0 auto; }
   .ver { text-align:center; color:#9ca3af; font-size:13px; margin:18px 0 6px; }
   /* shop, team, themes, boss */
   .books { flex-wrap:wrap; gap:8px; margin-bottom:12px; } .books .btn { flex:1 1 30%; font-size:15px; padding:10px 4px; }
@@ -576,7 +577,7 @@ function dialog(msg, buttons){
 }
 
 /* ============ app ============ */
-const APP_VERSION = 'v17 · 2026-11-13';     // bump together with CACHE in sw.js on every release
+const APP_VERSION = 'v18 · 2026-11-17';     // bump together with CACHE in sw.js on every release
 const app = $('#app');
 let S = null, SP = null;
 const SESSION_COINS = 60;     // coins for a perfect first-try session (+10 for finishing, +10 for 3 stars)
@@ -624,6 +625,7 @@ const WEAR = {
   face:[ {id:'glasses',emoji:'👓',price:25}, {id:'sunglasses',emoji:'🕶️',price:35}, {id:'stars',emoji:'🤩',price:40} ],
   extra:[ {id:'cape',emoji:'🦸',price:50}, {id:'bowtie',emoji:'🎀',price:25}, {id:'phones',emoji:'🎧',price:45}, {id:'medal',emoji:'🏅',price:35} ]
 };
+const shirtIcon = (color,print) => `<svg viewBox="0 0 56 56" class="shirt"><polygon points="4,18 14,10 22,6 34,6 42,10 52,18 44,27 40,23 40,50 16,50 16,23 12,27" fill="${color}" stroke="${shade(color,.7)}" stroke-width="2" stroke-linejoin="round"/>${print?`<text x="28" y="38" font-size="17" text-anchor="middle">${print}</text>`:''}</svg>`;
 const WEAR_TITLES = { top:'👕 Shirts 上衣', hat:'🎩 Hats 帽子', face:'🕶️ Glasses 眼鏡', extra:'✨ Extras 配件' };
 const avatarOf = n => Object.assign({ skin:AV.skins[1], hair:'short', hc:AV.hcols[0] }, (load()._avatar||{})[n]);
 function setAvatar(n, k, v){ const d = load(); d._avatar = d._avatar||{}; d._avatar[n] = Object.assign(avatarOf(n), {[k]:v}); save(d); }
@@ -704,7 +706,7 @@ function avatar(name, msg=''){
         <div class="avrow">Color 髮色 ${sw(AV.hcols,a.hc,'hc')}</div></div>
       ${Object.entries(WEAR).map(([slot,items])=>`<h3 style="margin:16px 0 8px">${WEAR_TITLES[slot]}</h3><div class="grid shop">${items.map(it=>{
         const own = sh.owned.includes(slot+':'+it.id), on = sh.equip[slot]===it.id;
-        return `<button class="item ${on?'on':''}" data-wear="${slot}|${it.id}|${it.price}"><span class="e">${it.emoji}</span><small>${on?'✓ wearing':own?'owned':'🪙 '+it.price}</small></button>`; }).join('')}</div>`).join('')}
+        return `<button class="item ${on?'on':''}" data-wear="${slot}|${it.id}|${it.price}"><span class="e">${slot==='top'?shirtIcon(it.color,it.print):it.emoji}</span><small>${on?'✓ wearing':own?'owned':'🪙 '+it.price}</small></button>`; }).join('')}</div>`).join('')}
     </div></div>
     <div class="row"><button class="btn" id="home">Home</button></div></div>`;
   $('#home').onclick = home;
